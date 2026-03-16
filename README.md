@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://brightdata.com"><img src="https://img.shields.io/badge/Powered%20by-Bright%20Data-3D7FFC?style=for-the-badge" alt="Powered by Bright Data"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License"></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/Skills-7-9D97F4?style=for-the-badge" alt="7 Skills"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/Skills-8-9D97F4?style=for-the-badge" alt="8 Skills"></a>
   <a href="#data-feeds-skill"><img src="https://img.shields.io/badge/Datasets-40+-15C1E6?style=for-the-badge" alt="40+ Datasets"></a>
   <a href="#bright-data-mcp-skill"><img src="https://img.shields.io/badge/MCP_Tools-60+-FF6B35?style=for-the-badge" alt="60+ MCP Tools"></a>
 </p>
@@ -21,6 +21,7 @@
   <a href="#-skills">Skills</a> •
   <a href="#-data-feeds">Data Feeds</a> •
   <a href="#bright-data-mcp-skill">MCP</a> •
+  <a href="#scraper-builder-skill">Scraper Builder</a> •
   <a href="#best-practices-skill">Best Practices</a> •
   <a href="#python-sdk-best-practices-skill">Python SDK</a> •
   <a href="#-setup">Setup</a> •
@@ -52,6 +53,7 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 | **`scrape`** | Scrape any webpage as clean markdown with automatic bot detection bypass |
 | **`data-feeds`** | Extract structured data from 40+ websites with automatic polling |
 | **`bright-data-mcp`** | Orchestrate 60+ Bright Data MCP tools for search, scraping, structured extraction, and browser automation |
+| **`scraper-builder`** | Build production-ready scrapers for any website — guides through site analysis, API selection, selector extraction, pagination, and complete implementation. Triggers on "build a scraper for..." |
 | **`bright-data-best-practices`** | Built-in reference for Web Unlocker, SERP API, Web Scraper API, and Browser API — Claude consults this automatically when writing Bright Data code |
 | **`python-sdk-best-practices`** | Comprehensive guide for the `brightdata-sdk` Python package — async/sync clients, platform scrapers, SERP, datasets, Scraper Studio, Browser API, error handling, and common patterns |
 | **`design-mirror`** | Replicates design system patterns, tokens, and components to build consistent, high-quality UIs |
@@ -149,6 +151,63 @@ With this skill:
 - **Structured data preferred** — `web_data_*` tools used over raw scraping when available
 - **Error handling** — built-in fallback strategies and URL validation guidance
 - **Workflow orchestration** — multi-step workflows for research, competitive analysis, social monitoring, and lead generation
+
+---
+
+## Scraper Builder Skill
+
+The `scraper-builder` skill guides you through building **production-ready web scrapers** for any website. Say "build a scraper for [site]" and Claude will walk you through the entire process.
+
+### How it works
+
+The skill follows a 6-phase workflow:
+
+1. **Understand the target** — What site, what data, what scope?
+2. **Check for pre-built scrapers** — Searches 100+ supported domains via the Dataset List API before writing any custom code
+3. **Site reconnaissance** — Fetches HTML via Web Unlocker, analyzes rendering (SSR vs CSR), discovers hidden APIs and JSON-LD data
+4. **Build the extractor** — Picks the right approach: Web Unlocker + parsing, direct API endpoint, or Browser API with Playwright
+5. **Handle pagination** — URL params, next-links, cursor tokens, infinite scroll, load-more buttons, sitemap crawling
+6. **Assemble complete scraper** — Runnable script with config, fetcher, parser, paginator, output, and error handling
+
+### API selection logic
+
+| Scenario | API Used |
+|----------|----------|
+| Site has pre-built scraper (Amazon, LinkedIn, etc.) | Web Scraper API |
+| Static HTML, no interaction needed | Web Unlocker |
+| Site exposes JSON API internally | Web Unlocker → API endpoint |
+| JS-rendered (React, Vue, Angular) | Browser API |
+| Infinite scroll / click required | Browser API |
+| Search engine results | SERP API |
+
+### Example usage
+
+```
+> build a scraper for Amazon product pages, I have 50 ASINs
+
+# Claude will:
+# 1. Find Amazon's pre-built scraper
+# 2. Use async trigger/poll/fetch for the batch
+# 3. Output a complete Python script with structured JSON
+```
+
+```
+> scrape all job listings from jobs.customsite.com with pagination
+
+# Claude will:
+# 1. Check for pre-built scraper (not found)
+# 2. Fetch HTML to analyze structure
+# 3. Pick Web Unlocker + BeautifulSoup
+# 4. Handle pagination automatically
+# 5. Output a complete working scraper
+```
+
+### Reference files
+
+- [skills/scraper-builder/SKILL.md](skills/scraper-builder/SKILL.md) — Main skill with decision tree and code patterns
+- [skills/scraper-builder/references/supported-domains.md](skills/scraper-builder/references/supported-domains.md) — Pre-built scraper lookup + dynamic Dataset List API
+- [skills/scraper-builder/references/site-analysis-guide.md](skills/scraper-builder/references/site-analysis-guide.md) — HTML analysis playbook, selector strategy, hidden API discovery
+- [skills/scraper-builder/references/pagination-patterns.md](skills/scraper-builder/references/pagination-patterns.md) — 7 pagination strategies with complete code examples
 
 ---
 
@@ -428,6 +487,12 @@ brightdata-plugin/
 │   │   ├── SKILL.md             # Python SDK patterns and best practices
 │   │   └── references/
 │   │       └── api-reference.md # Full API surface, payloads, constants
+│   ├── scraper-builder/
+│   │   ├── SKILL.md             # Scraper builder workflow and decision tree
+│   │   └── references/
+│   │       ├── supported-domains.md   # Pre-built scraper lookup + API
+│   │       ├── site-analysis-guide.md # HTML analysis playbook
+│   │       └── pagination-patterns.md # 7 pagination strategies
 │   └── design-mirror/
 │       └── SKILL.md             # Design system mirroring skill
 ├── sdk-python/                  # Bright Data Python SDK source
@@ -531,6 +596,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Browser API Best Practices](skills/bright-data-best-practices/references/browser-api.md) - CDP functions, geo, bandwidth
 - [Python SDK Best Practices](skills/python-sdk-best-practices/SKILL.md) - Async/sync clients, scrapers, SERP, datasets
 - [Python SDK API Reference](skills/python-sdk-best-practices/references/api-reference.md) - Full API surface, payloads, constants
+- [Scraper Builder](skills/scraper-builder/SKILL.md) - Build scrapers for any site with guided API selection
+- [Supported Domains](skills/scraper-builder/references/supported-domains.md) - 100+ pre-built scrapers lookup
 
 ---
 
