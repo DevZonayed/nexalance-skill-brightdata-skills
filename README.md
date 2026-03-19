@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://brightdata.com"><img src="https://img.shields.io/badge/Powered%20by-Bright%20Data-3D7FFC?style=for-the-badge" alt="Powered by Bright Data"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License"></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/Skills-8-9D97F4?style=for-the-badge" alt="8 Skills"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/Skills-9-9D97F4?style=for-the-badge" alt="9 Skills"></a>
   <a href="#data-feeds-skill"><img src="https://img.shields.io/badge/Datasets-40+-15C1E6?style=for-the-badge" alt="40+ Datasets"></a>
   <a href="#bright-data-mcp-skill"><img src="https://img.shields.io/badge/MCP_Tools-60+-FF6B35?style=for-the-badge" alt="60+ MCP Tools"></a>
 </p>
@@ -21,6 +21,7 @@
   <a href="#-skills">Skills</a> •
   <a href="#-data-feeds">Data Feeds</a> •
   <a href="#bright-data-mcp-skill">MCP</a> •
+  <a href="#brightdata-cli-skill">CLI</a> •
   <a href="#scraper-builder-skill">Scraper Builder</a> •
   <a href="#best-practices-skill">Best Practices</a> •
   <a href="#python-sdk-best-practices-skill">Python SDK</a> •
@@ -38,6 +39,7 @@ This plugin brings **Bright Data's powerful web infrastructure** directly into C
 - **Search Google** with structured JSON results — titles, links, and descriptions ready for processing
 - **Extract structured data** from 40+ websites — Amazon, LinkedIn, Instagram, TikTok, YouTube, and more
 - **Orchestrate 60+ MCP tools** — search, scrape, extract structured data, and automate browsers via Bright Data's MCP server
+- **Use the Bright Data CLI** — scrape, search, extract data, manage zones, and check budget directly from the terminal with `brightdata` / `bdata`
 - **Write correct Bright Data code** — built-in best practices for Web Unlocker, SERP API, Web Scraper API, and Browser API
 - **Build with the Python SDK** — comprehensive guide for the `brightdata-sdk` package with patterns for async/sync clients, platform scrapers, SERP, datasets, and more
 
@@ -56,6 +58,7 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 | **`scraper-builder`** | Build production-ready scrapers for any website — guides through site analysis, API selection, selector extraction, pagination, and complete implementation. Triggers on "build a scraper for..." |
 | **`bright-data-best-practices`** | Built-in reference for Web Unlocker, SERP API, Web Scraper API, and Browser API — Claude consults this automatically when writing Bright Data code |
 | **`python-sdk-best-practices`** | Comprehensive guide for the `brightdata-sdk` Python package — async/sync clients, platform scrapers, SERP, datasets, Scraper Studio, Browser API, error handling, and common patterns |
+| **`brightdata-cli`** | Guide for using the Bright Data CLI (`brightdata` / `bdata`) to scrape, search, extract structured data from 40+ platforms, manage proxy zones, and check account budget — all from the terminal |
 | **`design-mirror`** | Replicates design system patterns, tokens, and components to build consistent, high-quality UIs |
 
 ---
@@ -208,6 +211,62 @@ The skill follows a 6-phase workflow:
 - [skills/scraper-builder/references/supported-domains.md](skills/scraper-builder/references/supported-domains.md) — Pre-built scraper lookup + dynamic Dataset List API
 - [skills/scraper-builder/references/site-analysis-guide.md](skills/scraper-builder/references/site-analysis-guide.md) — HTML analysis playbook, selector strategy, hidden API discovery
 - [skills/scraper-builder/references/pagination-patterns.md](skills/scraper-builder/references/pagination-patterns.md) — 7 pagination strategies with complete code examples
+
+---
+
+## Brightdata CLI Skill
+
+The `brightdata-cli` skill teaches Claude how to use the [Bright Data CLI](https://github.com/nichochar/brightdata-cli) (`brightdata` or `bdata`) — a terminal tool for scraping, searching, structured data extraction, zone management, and budget monitoring.
+
+### Quick start
+
+```bash
+# One-time login (auto-creates zones, saves API key)
+brightdata login
+
+# Scrape any URL as markdown
+brightdata scrape https://example.com
+
+# Search Google with structured results
+brightdata search "web scraping best practices"
+
+# Extract LinkedIn profile data
+brightdata pipelines linkedin_person_profile "https://linkedin.com/in/username"
+
+# Check account balance
+brightdata budget
+```
+
+### Key commands
+
+| Command | Purpose |
+|---------|---------|
+| `brightdata scrape <url>` | Scrape any URL as markdown, HTML, JSON, or screenshot |
+| `brightdata search "<query>"` | Search Google/Bing/Yandex with structured results |
+| `brightdata pipelines <type> [params]` | Extract structured data from 40+ platforms |
+| `brightdata status <job-id>` | Check async job status |
+| `brightdata zones` | List proxy zones |
+| `brightdata budget` | View account balance and costs |
+| `brightdata skill add` | Install AI agent skills |
+| `brightdata config` | View/set configuration |
+
+### Pipe-friendly
+
+```bash
+# Search → extract first URL → scrape it
+brightdata search "top open source projects" --json \
+  | jq -r '.organic[0].link' \
+  | xargs brightdata scrape
+
+# Amazon product data to CSV
+brightdata pipelines amazon_product "https://amazon.com/dp/xxx" --format csv > product.csv
+```
+
+### Reference files
+
+- [skills/brightdata-cli/SKILL.md](skills/brightdata-cli/SKILL.md) — Main skill with command overview and usage patterns
+- [skills/brightdata-cli/references/commands.md](skills/brightdata-cli/references/commands.md) — Full command reference with all flags and options
+- [skills/brightdata-cli/references/pipelines.md](skills/brightdata-cli/references/pipelines.md) — 40+ pipeline types with platform-specific parameters
 
 ---
 
@@ -493,6 +552,11 @@ brightdata-plugin/
 │   │       ├── supported-domains.md   # Pre-built scraper lookup + API
 │   │       ├── site-analysis-guide.md # HTML analysis playbook
 │   │       └── pagination-patterns.md # 7 pagination strategies
+│   ├── brightdata-cli/
+│   │   ├── SKILL.md             # CLI usage guide and command patterns
+│   │   └── references/
+│   │       ├── commands.md      # Full command reference with all flags
+│   │       └── pipelines.md     # 40+ pipeline types and parameters
 │   └── design-mirror/
 │       └── SKILL.md             # Design system mirroring skill
 ├── sdk-python/                  # Bright Data Python SDK source
@@ -598,6 +662,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Python SDK API Reference](skills/python-sdk-best-practices/references/api-reference.md) - Full API surface, payloads, constants
 - [Scraper Builder](skills/scraper-builder/SKILL.md) - Build scrapers for any site with guided API selection
 - [Supported Domains](skills/scraper-builder/references/supported-domains.md) - 100+ pre-built scrapers lookup
+- [Bright Data CLI](skills/brightdata-cli/SKILL.md) - Terminal tool for scraping, search, and data extraction
+- [CLI Commands Reference](skills/brightdata-cli/references/commands.md) - Full command reference with all flags
+- [CLI Pipelines Reference](skills/brightdata-cli/references/pipelines.md) - 40+ platform pipeline types
 
 ---
 
