@@ -1,14 +1,14 @@
 # Pipeline Types Reference
 
-All pipeline types available via `brightdata pipelines <type> [params...]`.
+All pipeline types available via `bdata pipelines <type> [params...]`.
 
-Run `brightdata pipelines list` to see all types in your terminal.
+Run `bdata pipelines list` to see all types in your terminal.
 
 ## Parameter Patterns
 
 Most types require just a URL:
 ```bash
-brightdata pipelines <type> "<url>"
+bdata pipelines <type> "<url>"
 ```
 
 Some types have additional parameters — these are documented below.
@@ -34,7 +34,7 @@ Some types have additional parameters — these are documented below.
 ### Amazon Search Example
 ```bash
 # Requires both keyword and domain URL
-brightdata pipelines amazon_product_search "wireless headphones" "https://amazon.com"
+bdata pipelines amazon_product_search "wireless headphones" "https://amazon.com"
 ```
 
 ---
@@ -54,7 +54,7 @@ brightdata pipelines amazon_product_search "wireless headphones" "https://amazon
 ### LinkedIn People Search Example
 ```bash
 # Requires URL, first name, and last name
-brightdata pipelines linkedin_people_search "https://linkedin.com/search/results/people" "John" "Doe"
+bdata pipelines linkedin_people_search "https://linkedin.com/search/results/people" "John" "Doe"
 ```
 
 ---
@@ -84,13 +84,13 @@ brightdata pipelines linkedin_people_search "https://linkedin.com/search/results
 ### YouTube Comments Example
 ```bash
 # Optional second param: number of comments (default: 10)
-brightdata pipelines youtube_comments "https://youtube.com/watch?v=dQw4w9WgXcQ" 50
+bdata pipelines youtube_comments "https://youtube.com/watch?v=dQw4w9WgXcQ" 50
 ```
 
 ### Facebook Reviews Example
 ```bash
 # Optional second param: number of reviews (default: 10)
-brightdata pipelines facebook_company_reviews "https://facebook.com/company" 25
+bdata pipelines facebook_company_reviews "https://facebook.com/company" 25
 ```
 
 ---
@@ -111,7 +111,7 @@ brightdata pipelines facebook_company_reviews "https://facebook.com/company" 25
 ### Google Maps Reviews Example
 ```bash
 # Optional second param: days_limit (default: 3)
-brightdata pipelines google_maps_reviews "https://maps.google.com/maps/place/..." 7
+bdata pipelines google_maps_reviews "https://maps.google.com/maps/place/..." 7
 ```
 
 ---
@@ -122,19 +122,19 @@ All pipeline commands support:
 
 ```bash
 # JSON (default)
-brightdata pipelines amazon_product "<url>"
+bdata pipelines amazon_product "<url>"
 
 # CSV
-brightdata pipelines amazon_product "<url>" --format csv
+bdata pipelines amazon_product "<url>" --format csv
 
 # NDJSON / JSONL
-brightdata pipelines amazon_product "<url>" --format ndjson
+bdata pipelines amazon_product "<url>" --format ndjson
 
 # Save to file
-brightdata pipelines amazon_product "<url>" -o product.json
+bdata pipelines amazon_product "<url>" -o product.json
 
 # Custom timeout (default 600 seconds)
-brightdata pipelines amazon_product "<url>" --timeout 1200
+bdata pipelines amazon_product "<url>" --timeout 1200
 ```
 
 ## How Pipelines Work

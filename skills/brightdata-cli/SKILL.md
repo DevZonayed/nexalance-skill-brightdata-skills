@@ -7,13 +7,34 @@ description: Guide for using the Bright Data CLI (`brightdata` / `bdata`) to scr
 
 The Bright Data CLI (`brightdata` or `bdata`) gives you full access to Bright Data's web data platform from the terminal. It handles authentication, proxy zones, anti-bot bypass, CAPTCHA solving, and JavaScript rendering automatically — the user just needs to log in once.
 
+## Installation
+
+If the CLI is not installed yet, guide the user:
+
+**macOS / Linux:**
+```bash
+curl -fsSL https://cli.brightdata.com/install.sh | bash
+```
+
+**Windows or manual install (any platform):**
+```bash
+npm install -g @brightdata/cli
+```
+
+**Without installing (one-off usage):**
+```bash
+npx --yes --package @brightdata/cli brightdata <command>
+```
+
+Requires Node.js >= 20. After install, both `brightdata` and `bdata` (shorthand) are available.
+
 ## First-Time Setup
 
 Before anything else, check if the user is authenticated. If they haven't logged in yet, guide them through the one-time setup:
 
 ```bash
 # One-time login — opens the browser for OAuth, then everything is automatic
-brightdata login
+bdata login
 ```
 
 This single command:
@@ -26,17 +47,17 @@ After login, every subsequent command works without any manual intervention.
 
 For headless/SSH environments where no browser is available:
 ```bash
-brightdata login --device
+bdata login --device
 ```
 
 For direct API key authentication (non-interactive):
 ```bash
-brightdata login --api-key <key>
+bdata login --api-key <key>
 ```
 
 To verify setup is complete, run:
 ```bash
-brightdata config
+bdata config
 ```
 
 ## Command Reference
@@ -47,16 +68,22 @@ Read [references/pipelines.md](references/pipelines.md) for the complete list of
 
 ## Quick Command Overview
 
+`bdata` is the shorthand for `brightdata`. Both work identically.
+
 | Command | Purpose |
 |---------|---------|
-| `brightdata scrape <url>` | Scrape any URL as markdown, HTML, JSON, or screenshot |
-| `brightdata search "<query>"` | Search Google/Bing/Yandex with structured results |
-| `brightdata pipelines <type> [params]` | Extract structured data from 40+ platforms |
-| `brightdata status <job-id>` | Check async job status |
-| `brightdata zones` | List proxy zones |
-| `brightdata budget` | View account balance and costs |
-| `brightdata skill add` | Install AI agent skills |
-| `brightdata config` | View/set configuration |
+| `bdata scrape <url>` | Scrape any URL as markdown, HTML, JSON, or screenshot |
+| `bdata search "<query>"` | Search Google/Bing/Yandex with structured results |
+| `bdata pipelines <type> [params]` | Extract structured data from 40+ platforms |
+| `bdata pipelines list` | List all 40+ available pipeline types |
+| `bdata status <job-id>` | Check async job status |
+| `bdata zones` | List proxy zones |
+| `bdata budget` | View account balance and costs |
+| `bdata skill add` | Install AI agent skills |
+| `bdata skill list` | List available skills |
+| `bdata config` | View/set configuration |
+| `bdata login` | Authenticate with Bright Data |
+| `bdata version` | Show CLI version and system info |
 
 ## How to Use Each Command
 
@@ -66,25 +93,25 @@ Scrape any URL with automatic bot bypass, CAPTCHA handling, and JS rendering:
 
 ```bash
 # Default: returns clean markdown
-brightdata scrape https://example.com
+bdata scrape https://example.com
 
 # Get raw HTML
-brightdata scrape https://example.com -f html
+bdata scrape https://example.com -f html
 
 # Get structured JSON
-brightdata scrape https://example.com -f json
+bdata scrape https://example.com -f json
 
 # Take a screenshot
-brightdata scrape https://example.com -f screenshot -o page.png
+bdata scrape https://example.com -f screenshot -o page.png
 
 # Geo-targeted scrape from the US
-brightdata scrape https://amazon.com --country us
+bdata scrape https://amazon.com --country us
 
 # Save to file
-brightdata scrape https://example.com -o page.md
+bdata scrape https://example.com -o page.md
 
 # Async mode for heavy pages
-brightdata scrape https://example.com --async
+bdata scrape https://example.com --async
 ```
 
 ### Searching
@@ -93,22 +120,22 @@ Search engines with structured JSON output (Google returns parsed organic result
 
 ```bash
 # Google search with formatted table
-brightdata search "web scraping best practices"
+bdata search "web scraping best practices"
 
 # Get raw JSON for piping
-brightdata search "typescript tutorials" --json
+bdata search "typescript tutorials" --json
 
 # Search Bing
-brightdata search "bright data pricing" --engine bing
+bdata search "bright data pricing" --engine bing
 
 # Localized search
-brightdata search "restaurants berlin" --country de --language de
+bdata search "restaurants berlin" --country de --language de
 
 # News search
-brightdata search "AI regulation" --type news
+bdata search "AI regulation" --type news
 
 # Extract just URLs
-brightdata search "open source tools" --json | jq -r '.organic[].link'
+bdata search "open source tools" --json | jq -r '.organic[].link'
 ```
 
 ### Pipelines (Structured Data Extraction)
@@ -117,28 +144,28 @@ Extract structured data from 40+ platforms. These trigger async jobs that poll u
 
 ```bash
 # LinkedIn profile
-brightdata pipelines linkedin_person_profile "https://linkedin.com/in/username"
+bdata pipelines linkedin_person_profile "https://linkedin.com/in/username"
 
 # Amazon product
-brightdata pipelines amazon_product "https://amazon.com/dp/B09V3KXJPB"
+bdata pipelines amazon_product "https://amazon.com/dp/B09V3KXJPB"
 
 # Instagram profile
-brightdata pipelines instagram_profiles "https://instagram.com/username"
+bdata pipelines instagram_profiles "https://instagram.com/username"
 
 # Amazon search
-brightdata pipelines amazon_product_search "laptop" "https://amazon.com"
+bdata pipelines amazon_product_search "laptop" "https://amazon.com"
 
 # YouTube comments (top 50)
-brightdata pipelines youtube_comments "https://youtube.com/watch?v=..." 50
+bdata pipelines youtube_comments "https://youtube.com/watch?v=..." 50
 
 # Google Maps reviews (last 7 days)
-brightdata pipelines google_maps_reviews "https://maps.google.com/..." 7
+bdata pipelines google_maps_reviews "https://maps.google.com/..." 7
 
 # Output as CSV
-brightdata pipelines amazon_product "https://amazon.com/dp/..." --format csv -o product.csv
+bdata pipelines amazon_product "https://amazon.com/dp/..." --format csv -o product.csv
 
 # List all available pipeline types
-brightdata pipelines list
+bdata pipelines list
 ```
 
 ### Checking Status
@@ -147,62 +174,62 @@ For async jobs (from `--async` scrapes or pipelines):
 
 ```bash
 # Quick status check
-brightdata status <job-id>
+bdata status <job-id>
 
 # Wait until complete
-brightdata status <job-id> --wait
+bdata status <job-id> --wait
 
 # With custom timeout
-brightdata status <job-id> --wait --timeout 300
+bdata status <job-id> --wait --timeout 300
 ```
 
 ### Budget & Zones
 
 ```bash
 # Quick account balance
-brightdata budget
+bdata budget
 
 # Detailed balance with pending charges
-brightdata budget balance
+bdata budget balance
 
 # All zones cost/bandwidth
-brightdata budget zones
+bdata budget zones
 
 # Specific zone costs
-brightdata budget zone my_zone
+bdata budget zone my_zone
 
 # Date range filter
-brightdata budget zones --from 2024-01-01T00:00:00 --to 2024-02-01T00:00:00
+bdata budget zones --from 2024-01-01T00:00:00 --to 2024-02-01T00:00:00
 
 # List all zones
-brightdata zones
+bdata zones
 
 # Zone details
-brightdata zones info cli_unlocker
+bdata zones info cli_unlocker
 ```
 
 ### Configuration
 
 ```bash
 # View all config
-brightdata config
+bdata config
 
 # Set defaults
-brightdata config set default_zone_unlocker my_zone
-brightdata config set default_format json
+bdata config set default_zone_unlocker my_zone
+bdata config set default_format json
 ```
 
 ### Installing AI Agent Skills
 
 ```bash
 # Interactive picker — choose skills and target agents
-brightdata skill add
+bdata skill add
 
 # Install a specific skill
-brightdata skill add scrape
+bdata skill add scrape
 
 # List available skills
-brightdata skill list
+bdata skill list
 ```
 
 ## Output Modes
@@ -224,15 +251,15 @@ The CLI is pipe-friendly:
 
 ```bash
 # Search → extract first URL → scrape it
-brightdata search "top open source projects" --json \
+bdata search "top open source projects" --json \
   | jq -r '.organic[0].link' \
-  | xargs brightdata scrape
+  | xargs bdata scrape
 
 # Scrape and view with markdown reader
-brightdata scrape https://docs.github.com | glow -
+bdata scrape https://docs.github.com | glow -
 
 # Amazon product data to CSV
-brightdata pipelines amazon_product "https://amazon.com/dp/xxx" --format csv > product.csv
+bdata pipelines amazon_product "https://amazon.com/dp/xxx" --format csv > product.csv
 ```
 
 ## Environment Variables
@@ -250,16 +277,18 @@ These override stored configuration:
 
 | Error | Fix |
 |-------|-----|
-| "No Web Unlocker zone specified" | `brightdata config set default_zone_unlocker <zone>` or re-run `brightdata login` |
-| "Invalid or expired API key" | `brightdata login` |
+| CLI not found | Install with `npm i -g @brightdata/cli` or `curl -fsSL https://cli.brightdata.com/install.sh \| bash` |
+| "No Web Unlocker zone specified" | `bdata config set default_zone_unlocker <zone>` or re-run `bdata login` |
+| "Invalid or expired API key" | `bdata login` |
 | "Access denied" | Check zone permissions in the Bright Data control panel |
 | "Rate limit exceeded" | Wait and retry, or use `--async` for large jobs |
 | Async job timeout | Increase with `--timeout 1200` or `BRIGHTDATA_POLLING_TIMEOUT=1200` |
 
 ## Key Design Principles
 
-- **One-time auth**: After `brightdata login`, everything is automatic. No tokens to manage, no keys to pass.
+- **One-time auth**: After `bdata login`, everything is automatic. No tokens to manage, no keys to pass.
 - **Zones auto-created**: Login creates `cli_unlocker` and `cli_browser` zones automatically.
 - **Smart defaults**: Markdown output, auto-detected formats from file extensions, colors only in TTY.
 - **Pipe-friendly**: JSON output + jq for automation. Colors/spinners disabled in pipes.
 - **Async support**: Heavy jobs can run in background with `--async` + `status --wait`.
+- **npm package**: `@brightdata/cli` — install globally or use via `npx`.
