@@ -34,7 +34,7 @@ Before writing any code, you need to understand what the user wants and what the
 2. **What data?** — Which fields they need (product names, prices, reviews, etc.)
 3. **What scope?** — Single page, category pages, search results, entire site section?
 4. **Pagination?** — Do they need to scrape across multiple pages?
-5. **Volume?** — Roughly how many items/pages? (affects sync vs async choice)
+5. **Volume?** — Roughly how many items/pages? (affects sync vs async choice and concurrency strategy — see [references/concurrency-guide.md](references/concurrency-guide.md))
 6. **Output format?** — JSON, CSV, database? (default to JSON if unspecified)
 7. **Language preference?** — Python or Node.js? (default to Python if unspecified)
 
@@ -398,31 +398,43 @@ def scrape_with_next_links(start_url: str) -> list[dict]:
     return all_items
 ```
 
-### Pattern 3: Async Bulk Pagination
+### Pattern 3: Concurrent Bulk Scraping
 
-When you know all the page URLs upfront, fetch them concurrently for speed.
+When you have many URLs (50+), **always use concurrent requests with a semaphore** — never fetch them one-by-one in a sequential loop. Read [references/concurrency-guide.md](references/concurrency-guide.md) for the full concurrency playbook including per-site tuning, multi-site parallelism, and retry strategies.
 
 ```python
 import asyncio
-from brightdata import BrightDataClient
+import aiohttp
 
-async def scrape_pages_bulk(urls: list[str]) -> list[dict]:
-    """Scrape multiple pages concurrently using async Web Unlocker."""
-    async with BrightDataClient() as client:
-        tasks = [client.scrape_url(url) for url in urls]
-        results = await asyncio.gather(*tasks)
+CONCURRENCY = 20  # Start here, tune per site — see concurrency guide
 
-        all_items = []
-        for result in results:
-            if result.success:
-                items = parse_products(result.data)
-                all_items.extend(items)
+async def scrape_pages_concurrent(urls: list[str]) -> list[dict]:
+    """Scrape multiple pages with controlled concurrency."""
+    sem = asyncio.Semaphore(CONCURRENCY)
 
-        return all_items
+    async def fetch_one(session, url):
+        async with sem:
+            async with session.post(
+                "https://api.brightdata.com/request",
+                headers={"Authorization": f"Bearer {API_KEY}"},
+                json={"zone": ZONE, "url": url, "format": "raw"},
+                timeout=aiohttp.ClientTimeout(total=60),
+            ) as resp:
+                return {"url": url, "html": await resp.text()}
+
+    async with aiohttp.ClientSession() as session:
+        tasks = [fetch_one(session, url) for url in urls]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    all_items = []
+    for r in results:
+        if not isinstance(r, Exception):
+            all_items.extend(parse_products(r["html"]))
+    return all_items
 
 # Generate all page URLs
 urls = [f"https://example.com/products?page={i}" for i in range(1, 51)]
-items = asyncio.run(scrape_pages_bulk(urls))
+items = asyncio.run(scrape_pages_concurrent(urls))
 ```
 
 ### Pattern 4: Cursor/Token-Based Pagination (APIs)
@@ -460,8 +472,11 @@ Now put it all together into a clean, runnable script. Every scraper you build s
 2. **Fetcher** — the function that retrieves pages (Web Unlocker or Browser API)
 3. **Parser** — the function that extracts structured data from HTML/JSON
 4. **Paginator** — the logic that handles multiple pages
-5. **Output** — saving results to the requested format
-6. **Error handling** — retries, logging, graceful failures
+5. **Concurrency** — parallel fetching with semaphore control (see [references/concurrency-guide.md](references/concurrency-guide.md))
+6. **Output** — saving results to the requested format
+7. **Error handling** — retries, logging, graceful failures
+
+**Important:** If the user has more than ~50 URLs to scrape, the scraper **must** use concurrent requests — not a sequential loop. See [references/concurrency-guide.md](references/concurrency-guide.md) for the complete concurrent scraper template and tuning guidelines.
 
 ### Template: Complete Scraper Script
 
@@ -606,6 +621,8 @@ When building the scraper for the user, customize this template:
 
 7. **Don't create a new browser session per page when scraping a list.** If you're on a list page and clicking "next", you can stay in the same session. Only create new sessions for different base URLs.
 
+8. **Don't scrape URLs sequentially when you have many of them.** Fetching 1,000+ URLs one-by-one with `time.sleep(1)` between each is unacceptably slow. Use concurrent requests with a semaphore. See [references/concurrency-guide.md](references/concurrency-guide.md).
+
 ---
 
 ## Examples
@@ -681,3 +698,4 @@ Result: Async Playwright script with Browser API, infinite scroll handling, band
 - **[references/supported-domains.md](references/supported-domains.md)** — Complete list of pre-built scrapers with dataset IDs and Python SDK methods. Check this FIRST before writing custom scraping code.
 - **[references/site-analysis-guide.md](references/site-analysis-guide.md)** — Step-by-step playbook for analyzing a site's HTML structure and choosing reliable selectors.
 - **[references/pagination-patterns.md](references/pagination-patterns.md)** — Detailed pagination strategies with code examples for every common pattern.
+- **[references/concurrency-guide.md](references/concurrency-guide.md)** — How to scrape URLs concurrently with semaphore control, per-site tuning, multi-site parallelism, retries, and progress tracking. **Read this whenever the user has 50+ URLs to scrape.**
