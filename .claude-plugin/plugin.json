@@ -39,8 +39,8 @@
     "youtube",
     "facebook"
   ],
-  "dependencies": {
-    "curl": ">=7.0.0",
-    "jq": ">=1.5"
-  }
+  "dependencies": [
+    "curl",
+    "jq"
+  ]
 }
