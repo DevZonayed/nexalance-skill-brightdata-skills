@@ -26,3 +26,6 @@ temp/
 # Debug output
 debug/
 *.debug
+
+# Skill evals (development-only, not used at runtime)
+**/evals/
