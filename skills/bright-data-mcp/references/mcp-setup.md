@@ -104,9 +104,10 @@ API_TOKEN=your_token PRO_MODE=true npx @brightdata/mcp
 
 ## Choosing Your Mode
 
+All modes are **free for up to 5,000 requests per month** — including Pro tools.
+
 ### Rapid (Free) - Default
-- `search_engine` and `scrape_as_markdown` available
-- No additional cost beyond standard API usage
+- `search_engine` and `scrape_as_markdown` available (plus batch variants)
 - Best for: everyday browsing, reading web pages, search queries
 
 ### Pro Mode (`pro=1`)
