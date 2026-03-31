@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://brightdata.com"><img src="https://img.shields.io/badge/Powered%20by-Bright%20Data-3D7FFC?style=for-the-badge" alt="Powered by Bright Data"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License"></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/Skills-10-9D97F4?style=for-the-badge" alt="10 Skills"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/Skills-11-9D97F4?style=for-the-badge" alt="11 Skills"></a>
   <a href="#data-feeds-skill"><img src="https://img.shields.io/badge/Datasets-40+-15C1E6?style=for-the-badge" alt="40+ Datasets"></a>
   <a href="#bright-data-mcp-skill"><img src="https://img.shields.io/badge/MCP_Tools-60+-FF6B35?style=for-the-badge" alt="60+ MCP Tools"></a>
 </p>
@@ -22,6 +22,7 @@
   <a href="#-data-feeds">Data Feeds</a> •
   <a href="#bright-data-mcp-skill">MCP</a> •
   <a href="#brightdata-cli-skill">CLI</a> •
+  <a href="#competitive-intel-skill">Competitive Intel</a> •
   <a href="#scraper-builder-skill">Scraper Builder</a> •
   <a href="#best-practices-skill">Best Practices</a> •
   <a href="#python-sdk-best-practices-skill">Python SDK</a> •
@@ -40,6 +41,7 @@ This plugin brings **Bright Data's powerful web infrastructure** directly into C
 - **Extract structured data** from 40+ websites — Amazon, LinkedIn, Instagram, TikTok, YouTube, and more
 - **Orchestrate 60+ MCP tools** — search, scrape, extract structured data, and automate browsers via Bright Data's MCP server
 - **Use the Bright Data CLI** — scrape, search, extract data, manage zones, and check budget directly from the terminal with `brightdata` / `bdata`
+- **Run competitive intelligence** — real-time competitor analysis, pricing monitoring, review mining, hiring signal analysis, and market landscape mapping using live web data
 - **Write correct Bright Data code** — built-in best practices for Web Unlocker, SERP API, Web Scraper API, and Browser API
 - **Build with the Python SDK** — comprehensive guide for the `brightdata-sdk` package with patterns for async/sync clients, platform scrapers, SERP, datasets, and more
 
@@ -59,6 +61,7 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 | **`bright-data-best-practices`** | Built-in reference for Web Unlocker, SERP API, Web Scraper API, and Browser API — Claude consults this automatically when writing Bright Data code |
 | **`python-sdk-best-practices`** | Comprehensive guide for the `brightdata-sdk` Python package — async/sync clients, platform scrapers, SERP, datasets, Scraper Studio, Browser API, error handling, and common patterns |
 | **`brightdata-cli`** | Guide for using the Bright Data CLI (`brightdata` / `bdata`) to scrape, search, extract structured data from 40+ platforms, manage proxy zones, and check account budget — all from the terminal |
+| **`competitive-intel`** | Real-time competitive intelligence using live web data — competitor snapshots, pricing comparison, review mining, hiring signal analysis, content & SEO battles, and market landscape mapping. Replaces $15K+/yr enterprise CI tools at pennies per analysis |
 | **`design-mirror`** | Replicates design system patterns, tokens, and components to build consistent, high-quality UIs |
 | **`brd-browser-debug`** | Debug Bright Data Scraping Browser sessions — smart triage of failures, per-session bandwidth tracking, captcha reporting, and pattern detection using the Browser Sessions API |
 
@@ -155,6 +158,64 @@ With this skill:
 - **Structured data preferred** — `web_data_*` tools used over raw scraping when available
 - **Error handling** — built-in fallback strategies and URL validation guidance
 - **Workflow orchestration** — multi-step workflows for research, competitive analysis, social monitoring, and lead generation
+
+---
+
+## Competitive Intel Skill
+
+The `competitive-intel` skill turns Bright Data's scraping infrastructure into **real-time competitive intelligence** — replacing $15K–$50K/year enterprise CI tools (Crayon, Klue, AlphaSense) with an AI-native alternative that costs pennies per analysis.
+
+### How it works
+
+The skill combines **live web data** (via `bdata` CLI) with **strategic analysis frameworks** to deliver actionable competitive insights — not stale training knowledge.
+
+Say "analyze my competitor" or "compare pricing" and Claude will:
+1. Gather live data using `bdata search`, `bdata scrape`, and `bdata pipelines`
+2. Apply the appropriate analytical framework (SWOT, Porter's Five Forces, positioning matrix, etc.)
+3. Deliver a structured report with source citations and strategic recommendations
+
+### Analysis modules
+
+| Module | What it does | Data sources |
+|--------|-------------|-------------|
+| **Competitor Snapshot** | Quick profile: positioning, pricing, team, funding, strengths/weaknesses | `bdata scrape` (website), `bdata pipelines` (Crunchbase, LinkedIn) |
+| **Pricing Intelligence** | Compare pricing across competitors with positioning analysis | `bdata scrape` (pricing pages), `bdata search` (third-party reviews) |
+| **Review Intelligence** | Mine customer reviews for pain points, loved features, and gaps | `bdata scrape` (G2, Capterra), `bdata pipelines` (app stores, Google Maps) |
+| **Hiring Signal Analysis** | Infer strategic direction from job postings | `bdata pipelines` (LinkedIn jobs), `bdata scrape` (careers pages) |
+| **Content & SEO Battle** | Compare content strategy and search positioning | `bdata search` (SERP rankings), `bdata scrape` (blogs) |
+| **Market Landscape Map** | Discover and categorize all players in a market | `bdata search` (discovery), `bdata scrape` (homepages), `bdata pipelines` (Crunchbase) |
+
+### Example usage
+
+```
+> Analyze Notion as a competitor. I'm building a PM tool for small teams.
+
+# Claude will:
+# 1. Search Google for Notion
+# 2. Scrape notion.com, /pricing, /about
+# 3. Pull Crunchbase and LinkedIn data
+# 4. Deliver a structured Competitor Snapshot with
+#    pricing table, messaging analysis, strengths,
+#    vulnerabilities, and strategic recommendations
+```
+
+```
+> Compare pricing between Slack, Teams, and Discord
+
+# Claude will:
+# 1. Scrape all three pricing pages
+# 2. Normalize into comparison matrix
+# 3. Identify pricing models and positioning opportunities
+# 4. Deliver a Pricing Intelligence Report
+```
+
+### Reference files
+
+- [skills/competitive-intel/SKILL.md](skills/competitive-intel/SKILL.md) — Main skill with 6 analysis modules and CLI command patterns
+- [skills/competitive-intel/references/data-source-guide.md](skills/competitive-intel/references/data-source-guide.md) — Maps 30+ CI needs to specific `bdata` commands
+- [skills/competitive-intel/references/output-templates.md](skills/competitive-intel/references/output-templates.md) — 8 report templates (Snapshot, Pricing, Reviews, Hiring, Content, Landscape, Battlecard, Executive Summary)
+- [skills/competitive-intel/references/analysis-frameworks.md](skills/competitive-intel/references/analysis-frameworks.md) — SWOT, Porter's Five Forces, positioning matrix, Jobs-to-be-Done, Blue Ocean, Win/Loss
+- [skills/competitive-intel/references/industry-signals.md](skills/competitive-intel/references/industry-signals.md) — How to interpret pricing, hiring, content, review, funding, and social signals
 
 ---
 
@@ -483,11 +544,21 @@ bash skills/scrape/scripts/scrape.sh "https://example.com/climate-article"
 
 ### Competitive Analysis
 ```bash
-# Get competitor product data
-bash skills/data-feeds/scripts/datasets.sh amazon_product "https://amazon.com/dp/B09V3KXJPB"
+# With the competitive-intel skill, just ask Claude:
+# "Analyze Notion as a competitor" or "Compare pricing between Slack and Teams"
+# Claude will automatically run the right bdata commands:
 
-# Get company info
-bash skills/data-feeds/scripts/datasets.sh linkedin_company_profile "https://linkedin.com/company/openai"
+# Search for competitor info
+bdata search "Notion project management" --json
+
+# Scrape competitor pricing page
+bdata scrape https://www.notion.com/pricing
+
+# Get company data from Crunchbase
+bdata pipelines crunchbase_company "https://www.crunchbase.com/organization/notion-so"
+
+# Get LinkedIn company profile
+bdata pipelines linkedin_company_profile "https://www.linkedin.com/company/notionhq"
 ```
 
 ### Social Media Monitoring
@@ -558,6 +629,13 @@ brightdata-plugin/
 │   │   └── references/
 │   │       ├── commands.md      # Full command reference with all flags
 │   │       └── pipelines.md     # 40+ pipeline types and parameters
+│   ├── competitive-intel/
+│   │   ├── SKILL.md             # Competitive intelligence (6 analysis modules)
+│   │   └── references/
+│   │       ├── data-source-guide.md    # CI needs → bdata command mapping
+│   │       ├── output-templates.md     # 8 report templates
+│   │       ├── analysis-frameworks.md  # SWOT, Porter's, positioning, JTBD, Blue Ocean
+│   │       └── industry-signals.md     # Signal interpretation guide
 │   └── design-mirror/
 │       └── SKILL.md             # Design system mirroring skill
 ├── sdk-python/                  # Bright Data Python SDK source
@@ -666,6 +744,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Bright Data CLI](skills/brightdata-cli/SKILL.md) - Terminal tool for scraping, search, and data extraction
 - [CLI Commands Reference](skills/brightdata-cli/references/commands.md) - Full command reference with all flags
 - [CLI Pipelines Reference](skills/brightdata-cli/references/pipelines.md) - 40+ platform pipeline types
+- [Competitive Intelligence](skills/competitive-intel/SKILL.md) - Real-time competitor analysis with live web data
+- [CI Data Source Guide](skills/competitive-intel/references/data-source-guide.md) - CI needs mapped to bdata commands
+- [CI Analysis Frameworks](skills/competitive-intel/references/analysis-frameworks.md) - SWOT, Porter's, positioning, JTBD, Blue Ocean
+- [CI Output Templates](skills/competitive-intel/references/output-templates.md) - 8 report templates
+- [CI Industry Signals](skills/competitive-intel/references/industry-signals.md) - Signal interpretation guide
 
 ---
 
