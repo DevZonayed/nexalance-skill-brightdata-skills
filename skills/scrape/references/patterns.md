@@ -12,7 +12,7 @@ Before claiming a scrape succeeded:
    - `Checking your browser`
    - `captcha`
    - `cf-browser-verification`
-   - `cloudflare` *(with total body < 2KB)*
+   - `cloudflare` *(with < 2KB total body)*
 3. **Expected markers present** for the task (e.g., price pattern on a product page, at least one heading in an article).
 
 Failing any check → retry with `--country`, then escalate to `bdata browser`.
