@@ -1,61 +1,118 @@
 ---
 name: search
-description: Search Google via Bright Data SERP API. Returns structured JSON results with title, link, and description. Requires BRIGHTDATA_API_KEY and BRIGHTDATA_UNLOCKER_ZONE environment variables.
+description: Search the web via the Bright Data CLI — `bdata search` for Google/Bing/Yandex SERP, `bdata discover` for intent-ranked semantic results. Use when the user wants SERP results, needs URLs to feed into scraping, or wants semantic web discovery with optional page content. Hands off to `scrape` once target URLs are chosen, and to `data-feeds` when the user wants structured data from a known platform. Requires the Bright Data CLI; proactively guides install + login if missing.
 ---
 
-# Bright Data - Google Search
+# Bright Data — Search
 
-Search Google and get structured JSON results using Bright Data's SERP API.
+Find things on the web. Two commands live in this skill:
 
-## Setup
+- **`bdata search`** — classic keyword SERP (Google/Bing/Yandex). Best when you want "what ranks for keyword X."
+- **`bdata discover`** — AI intent-ranked discovery with optional page content. Best when you want "pages about topic Y that match intent Z."
 
-**1. Get your API Key:**
-Get a key from [Bright Data Dashboard](https://brightdata.com/cp).
+For structured data from a known platform (Amazon, LinkedIn, TikTok, …), **stop and use `data-feeds` instead**.
 
-**2. Create a Web Unlocker zone:**
-Create a zone at brightdata.com/cp by clicking "Add" (top-right), selecting "Unlocker zone".
-
-**3. Set environment variables:**
-```bash
-export BRIGHTDATA_API_KEY="your-api-key"
-export BRIGHTDATA_UNLOCKER_ZONE="your-zone-name"
-```
-
-## Usage
+## Setup gate (run first)
 
 ```bash
-bash scripts/search.sh "query" [cursor]
+if ! command -v bdata >/dev/null 2>&1; then
+    echo "bdata CLI not installed — see bright-data-best-practices/references/cli-setup.md"
+elif ! bdata zones >/dev/null 2>&1; then
+    echo "bdata not authenticated — run: bdata login  (or: bdata login --device for SSH)"
+fi
 ```
 
-**Parameters:**
-- `query` (required): Search term
-- `cursor` (optional): Page number for pagination (0-indexed, default: 0)
+Halt and route to `skills/bright-data-best-practices/references/cli-setup.md` if either check fails.
 
-**Examples:**
+## Pick your path
+
+| Situation | Action |
+|---|---|
+| Single keyword query, just SERP | `bdata search "<query>" --engine google --json --pretty` |
+| Paginated SERP (more results) | loop `--page 0`, `--page 1`, … (0-indexed) |
+| Multiple queries | shell loop over a queries file |
+| Intent-ranked / semantic (not keyword) | `bdata discover "<query>" --intent "<intent>" --num-results 20` |
+| Want page bodies along with results, one pass | `bdata discover ... --include-content` |
+| News / images / shopping SERP | `bdata search "<query>" --type news` (or `images`, `shopping`) |
+| Want Amazon/LinkedIn/TikTok/… structured data | **stop — hand off to `data-feeds`** |
+| Have URLs, want content | **hand off to `scrape`** |
+
+## Action
+
+Core commands:
+
 ```bash
-# Basic search
-bash scripts/search.sh "climate change"
+# Google SERP, structured JSON
+bdata search "site:example.com privacy policy" --engine google --json --pretty
 
-# Get page 2 of results
-bash scripts/search.sh "climate change" 1
+# Localized Bing (German results, German language)
+bdata search "datenschutz" --engine bing --country de --language de --json
+
+# Second page of results (0-indexed)
+bdata search "machine learning papers" --page 1 --json
+
+# Mobile SERP (rankings differ from desktop)
+bdata search "best coffee shops" --device mobile --json
+
+# News vertical
+bdata search "openai" --type news --json --pretty
+
+# Intent-ranked discovery
+bdata discover "enterprise LLM platforms" \
+    --intent "vendor pages with pricing" \
+    --num-results 15 --json
+
+# Discovery with page content in markdown
+bdata discover "webhook best practices" \
+    --include-content --num-results 10 -o results.json
+
+# Date-filtered discovery
+bdata discover "react server components" \
+    --start-date 2025-01-01 --end-date 2025-12-31 --num-results 20
 ```
 
-## Output Format
+Full flag reference: [`references/flags.md`](references/flags.md).
 
-Returns JSON with structured `organic` array:
-```json
-{
-  "organic": [
-    {
-      "link": "https://example.com/article",
-      "title": "Article Title",
-      "description": "Brief description of the page..."
-    }
-  ]
-}
-```
+### `search` vs `discover` — pick the right one
 
-## Dependencies
+| You want | Use |
+|---|---|
+| "What Google ranks for this exact keyword" | `search` |
+| "Pages that match this meaning/intent" | `discover` |
+| "News / images / shopping vertical SERP" | `search --type <vertical>` |
+| "Results + page bodies in one call" | `discover --include-content` |
+| "Dedup / semantic ranking across queries" | `discover` |
 
-- `curl` - For API requests
-- `jq` - For JSON processing
+## Verification gate
+
+1. **JSON parses cleanly:** `jq . <output>` returns 0.
+2. **Result array non-empty** — if empty, the query is legitimately zero-result; relax the query and re-run. Don't claim success on empty results without telling the user.
+3. **Required fields present:**
+   - `search`: results live at `.organic[]`; each has `title` + `link`
+   - `discover`: results live at `.results[]`; each has `title` + `link`; if `--include-content`, also `content`
+4. **For `discover --include-content`:** no block-page signatures in the `content` field (same list as scrape, case-insensitive):
+   - `Access Denied`
+   - `Just a moment`
+   - `Attention Required`
+   - `Checking your browser`
+   - `captcha`
+   - `cf-browser-verification`
+   - `cloudflare` *(with < 2KB total body)*
+5. **Geo sanity:** if the user expected country-specific results, inspect TLDs / languages of top results. If mis-localized, re-run with explicit `--country` and `--language`.
+
+## Red flags
+
+- Using `search` to *fetch content* from Amazon, LinkedIn, TikTok, etc. when `data-feeds` returns clean structured data in one call.
+- Scraping every SERP result blindly — filter first (domain allowlist, keyword in title, relevance heuristic).
+- Confusing `search` (keyword) with `discover` (semantic). They answer different questions.
+- Running multiple queries without deduping URLs across result sets before scraping.
+- Assuming SERP order is universal — it's personalized by geo + device. Always set `--country` and `--device` explicitly for reproducibility.
+- Using `--page` as a result count — it's a page index, not a limit. Each page returns ~10 results.
+- Assuming SERP results are at `.results[]` — for `bdata search` they live at `.organic[]`. (Discover uses `.results[]`.)
+- Hardcoding `--num-results 100` on `discover` without realizing the pipeline polls until that many are found; can be slow.
+
+## References
+
+- [`references/flags.md`](references/flags.md) — full flags for `search` and `discover` with when-to-use notes.
+- [`references/patterns.md`](references/patterns.md) — multi-query dedup, SERP → filter → scrape pipeline, `search` vs `discover` decision, legacy `curl` fallback, shared verification checklist.
+- [`references/examples.md`](references/examples.md) — (1) single Google query, (2) localized Bing, (3) batch queries + dedup into URL list, (4) `discover --include-content` end-to-end.

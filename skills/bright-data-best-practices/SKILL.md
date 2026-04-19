@@ -4,6 +4,14 @@ description: "Build production-ready Bright Data integrations with best practice
 user-invocable: false
 ---
 
+# CLI Setup Reference
+
+Install, authentication, and troubleshooting for the Bright Data CLI (`bdata`) are documented in a single canonical place:
+
+→ [`references/cli-setup.md`](references/cli-setup.md)
+
+Consult it before any task that shells out to `bdata`.
+
 # Bright Data APIs
 
 Bright Data provides infrastructure for web data extraction at scale. Four primary APIs cover different use cases — always pick the most specific tool for the job.
@@ -20,7 +28,7 @@ Bright Data provides infrastructure for web data extraction at scale. Four prima
 
 ## Authentication Pattern (All APIs)
 
-All APIs share the same authentication model:
+All APIs share the same authentication model. The env vars below apply to direct REST API integrations — if you are using the `bdata` CLI, `bdata login` handles all of these automatically (see [`references/cli-setup.md`](references/cli-setup.md)).
 
 ```bash
 export BRIGHTDATA_API_KEY="your-api-key"         # From Control Panel > Account Settings
