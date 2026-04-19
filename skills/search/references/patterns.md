@@ -79,7 +79,7 @@ for page in 0 1 2 3 4; do
     [[ "$hash" == "$prev_hash" ]] && { rm "p${page}.json"; break; }
     # Empty results → break
     count=$(jq '.organic | length' "p${page}.json")
-    [[ "$count" == "0" || "$count" == "null" ]] && { rm "p${page}.json"; break; }
+    [[ "$count" == "0" ]] && { rm "p${page}.json"; break; }
     prev_hash=$hash
 done
 ```
@@ -109,14 +109,14 @@ done
 
 ## Legacy `curl` fallback (deprecated)
 
-Only when CLI cannot be installed. SERP API endpoint via Web Unlocker:
+Only when CLI cannot be installed. SERP API endpoint via Web Unlocker. The CLI's `bdata search` prefers `BRIGHTDATA_SERP_ZONE` and falls back to `BRIGHTDATA_UNLOCKER_ZONE`; pick whichever is set in your environment:
 
 ```bash
 curl -sS "https://api.brightdata.com/request" \
     -H "Authorization: Bearer $BRIGHTDATA_API_KEY" \
     -H "Content-Type: application/json" \
     -d "{
-        \"zone\": \"$BRIGHTDATA_UNLOCKER_ZONE\",
+        \"zone\": \"${BRIGHTDATA_SERP_ZONE:-$BRIGHTDATA_UNLOCKER_ZONE}\",
         \"url\": \"https://www.google.com/search?q=$(printf '%s' "$QUERY" | jq -sRr @uri)&brd_json=1\",
         \"format\": \"raw\"
     }"
