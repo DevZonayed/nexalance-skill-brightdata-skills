@@ -4,6 +4,14 @@ description: "Build production-ready Bright Data integrations with best practice
 user-invocable: false
 ---
 
+## CLI Setup Reference
+
+Install, authentication, and troubleshooting for the Bright Data CLI (`bdata`) are documented in a single canonical place:
+
+→ [`references/cli-setup.md`](references/cli-setup.md)
+
+Consult it before any task that shells out to `bdata`.
+
 # Bright Data APIs
 
 Bright Data provides infrastructure for web data extraction at scale. Four primary APIs cover different use cases — always pick the most specific tool for the job.
