@@ -1775,7 +1775,7 @@ test -s /tmp/smoke-scrape.md && echo "scrape OK"
 # search
 bdata search "bright data" --engine google --country us --json \
     -o /tmp/smoke-search.json
-jq '.results | length' /tmp/smoke-search.json | grep -q '^[1-9]' \
+jq '.organic | length' /tmp/smoke-search.json | grep -q '^[1-9]' \
     && echo "search OK"
 
 # pipelines (quick one)
