@@ -4,7 +4,7 @@ description: "Build production-ready Bright Data integrations with best practice
 user-invocable: false
 ---
 
-## CLI Setup Reference
+# CLI Setup Reference
 
 Install, authentication, and troubleshooting for the Bright Data CLI (`bdata`) are documented in a single canonical place:
 
