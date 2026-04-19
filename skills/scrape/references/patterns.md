@@ -15,7 +15,7 @@ Before claiming a scrape succeeded:
    - `cloudflare` *(with total body < 2KB)*
 3. **Expected markers present** for the task (e.g., price pattern on a product page, at least one heading in an article).
 
-Failing any check → retry with `--country`, then `--mobile`, then escalate to `bdata browser`.
+Failing any check → retry with `--country`, then escalate to `bdata browser`.
 
 ## Small-batch shell loop (≤ ~20 URLs)
 
@@ -65,17 +65,6 @@ done
 
 Adapt the "contains an item marker" grep to the actual site's output.
 
-## `--async` polling recipe
-
-For pages that routinely take > 30s:
-
-```bash
-response_id=$(bdata scrape "https://slow.example" --async --json | jq -r '.response_id')
-bdata status "$response_id" --wait --json --pretty -o result.json
-```
-
-`bdata status --wait` polls until the job completes (default timeout 600s; override with `--timeout <sec>`).
-
 ## Retry / backoff
 
 `bdata scrape` returns non-zero on failure. Wrap with a simple retry:
@@ -99,16 +88,16 @@ scrape_with_retry() {
 When a scrape returns a block-page signature:
 
 1. Retry same URL with a different `--country` (e.g. `de` if origin is US).
-2. If still blocked, retry with `--mobile` *(note: may be no-op in CLI v0.1.8)*.
-3. If still blocked, escalate to `bdata browser` (real-browser with JS execution).
+2. If still blocked, escalate to `bdata browser` (real-browser with JS execution).
 
 Example:
 
 ```bash
 try_scrape() {
     local url=$1 out=$2
-    for args in "" "--country de" "--mobile" "--country de --mobile"; do
-        bdata scrape "$url" $args -f markdown -o "$out"
+    for args in "" "--country de" "--country jp" "--country gb"; do
+        bdata scrape "$url" $args -f markdown -o "$out" || continue
+        [[ -s "$out" ]] || continue
         if ! grep -qiE 'access denied|just a moment|captcha|cloudflare' "$out"; then
             return 0
         fi
@@ -117,7 +106,7 @@ try_scrape() {
 }
 ```
 
-If all four attempts return block pages, hand off to the `bdata browser` command.
+If all country rotations return block pages, hand off to the `bdata browser` command.
 
 ## Legacy `curl` fallback (deprecated)
 
