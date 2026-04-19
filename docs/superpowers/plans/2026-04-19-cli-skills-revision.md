@@ -64,7 +64,7 @@ All tasks reference the CLI as verified on 2026-04-19. Do NOT invent flags. Rele
 **Pipeline types (43, verified 2026-04-19 via `bdata pipelines list`):** `amazon_product`, `amazon_product_reviews`, `amazon_product_search`, `apple_app_store`, `bestbuy_products`, `booking_hotel_listings`, `crunchbase_company`, `ebay_product`, `etsy_products`, `facebook_company_reviews`, `facebook_events`, `facebook_marketplace_listings`, `facebook_posts`, `github_repository_file`, `google_maps_reviews`, `google_play_store`, `google_shopping`, `homedepot_products`, `instagram_comments`, `instagram_posts`, `instagram_profiles`, `instagram_reels`, `linkedin_company_profile`, `linkedin_job_listings`, `linkedin_people_search`, `linkedin_person_profile`, `linkedin_posts`, `reddit_posts`, `reuter_news`, `tiktok_comments`, `tiktok_posts`, `tiktok_profiles`, `tiktok_shop`, `walmart_product`, `walmart_seller`, `x_posts`, `yahoo_finance_business`, `youtube_comments`, `youtube_profiles`, `youtube_videos`, `zara_products`, `zillow_properties_listing`, `zoominfo_company_profile`.
 
 **Keyword-shaped pipelines (do NOT take a URL):**
-- `amazon_product_search <keyword> <domain> <pages_to_search>`
+- `amazon_product_search <keyword> <domain_url>` (`pages_to_search` is hardcoded to 1 by the CLI and is not a user-visible arg)
 - `linkedin_people_search` — multi-arg
 - `facebook_company_reviews <url> <number_of_reviews>`
 - `google_maps_reviews <url> <days_range>`
@@ -1214,7 +1214,7 @@ A few pipelines take non-URL inputs. Verify with `bdata pipelines <type> --help`
 
 | Pipeline | Input |
 |---|---|
-| `amazon_product_search` | `<keyword> <domain> <pages_to_search>` — e.g., `"running shoes" amazon.com 2` |
+| `amazon_product_search` | two positional args: `<keyword> <domain_url>` (the CLI hardcodes `pages_to_search` to 1) — e.g., `"running shoes" "https://www.amazon.com"` |
 | `linkedin_people_search` | multi-arg (run once with no args to see required positional params) |
 | `facebook_company_reviews` | `<url> <number_of_reviews>` |
 | `google_maps_reviews` | `<url> <days_range>` |
@@ -1242,8 +1242,9 @@ bdata pipelines amazon_product_reviews \
 
 # Amazon product search (keyword-shaped)
 bdata pipelines amazon_product_search \
-    "noise cancelling headphones" amazon.com 2 \
+    "noise cancelling headphones" "https://www.amazon.com" \
     --format json --pretty -o search.json
+# The CLI hardcodes pages_to_search to 1 internally — pass only those two args.
 
 # LinkedIn person profile
 bdata pipelines linkedin_person_profile \
@@ -1411,7 +1412,7 @@ Always cross-check with `bdata pipelines list` before hardcoding names.
 
 | Pipeline | Args |
 |---|---|
-| `amazon_product_search` | `<keyword> <domain> <pages_to_search>` — e.g., `"noise cancelling headphones" amazon.com 2` |
+| `amazon_product_search` | two positional args: `<keyword> <domain_url>` (the CLI hardcodes `pages_to_search` to 1) — e.g., `"noise cancelling headphones" "https://www.amazon.com"` |
 | `linkedin_people_search` | multi-arg — run without args to see required positionals |
 | `facebook_company_reviews` | `<url> <number_of_reviews>` |
 | `google_maps_reviews` | `<url> <days_range>` |
@@ -1542,8 +1543,9 @@ These pipelines take non-URL inputs:
 ```bash
 # amazon_product_search — search Amazon by keyword
 bdata pipelines amazon_product_search \
-    "running shoes" amazon.com 2 \
+    "running shoes" "https://www.amazon.com" \
     -o search.json
+# The CLI hardcodes pages_to_search to 1 internally — pass only those two args.
 
 # google_maps_reviews — reviews for a place, last N days
 bdata pipelines google_maps_reviews \
@@ -1680,14 +1682,15 @@ Search Amazon by keyword (no URL needed):
 
 ```bash
 bdata pipelines amazon_product_search \
-    "mechanical keyboard" amazon.com 2 \
+    "mechanical keyboard" "https://www.amazon.com" \
     --format json --pretty -o search.json
+# The CLI hardcodes pages_to_search to 1 internally — pass only those two args.
 
 jq 'length' search.json                       # number of results
 jq -r '.[0:5][] | "\(.title) — \(.price)"' search.json
 ```
 
-Note the three positional args: `<keyword> <domain> <pages>`. Calling with fewer args prints the expected usage.
+Note the two positional args: `<keyword> <domain_url>` (the CLI hardcodes `pages_to_search` to 1). Calling with wrong args prints the expected usage.
 ````
 
 - [ ] **Step 2: Commit**

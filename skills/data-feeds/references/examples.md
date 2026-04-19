@@ -94,7 +94,7 @@ bdata pipelines amazon_product_search \
     "mechanical keyboard" "https://www.amazon.com" \
     --format json --pretty -o search.json
 
-jq 'length' search.json                                     # number of results
+jq 'length' search.json                                     # number of results (output is a top-level array)
 jq -r '.[0:5][] | "\(.title) — \(.price)"' search.json
 ```
 
