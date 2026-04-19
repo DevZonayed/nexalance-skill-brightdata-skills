@@ -90,7 +90,14 @@ Full flag reference: [`references/flags.md`](references/flags.md).
 3. **Required fields present:**
    - `search`: results live at `.organic[]`; each has `title` + `link`
    - `discover`: results live at `.results[]`; each has `title` + `link`; if `--include-content`, also `content`
-4. **For `discover --include-content`:** no block-page signatures in the `content` field (same list as scrape: "Access Denied", "Just a moment", "Attention Required", "Checking your browser", "captcha", "cf-browser-verification", "cloudflare" with < 2KB).
+4. **For `discover --include-content`:** no block-page signatures in the `content` field (same list as scrape, case-insensitive):
+   - `Access Denied`
+   - `Just a moment`
+   - `Attention Required`
+   - `Checking your browser`
+   - `captcha`
+   - `cf-browser-verification`
+   - `cloudflare` *(with < 2KB total body)*
 5. **Geo sanity:** if the user expected country-specific results, inspect TLDs / languages of top results. If mis-localized, re-run with explicit `--country` and `--language`.
 
 ## Red flags
