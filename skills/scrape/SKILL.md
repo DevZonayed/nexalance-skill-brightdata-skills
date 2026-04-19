@@ -47,15 +47,18 @@ bdata scrape "https://example.com" -f html -o page.html
 # Structured JSON (when the Unlocker returns parsed fields)
 bdata scrape "https://example.com" -f json --pretty -o page.json
 
+# Visual snapshot (saves PNG)
+bdata scrape "https://example.com" -f screenshot -o page.png
+
 # Geo-targeted (override the exit country)
 bdata scrape "https://example.com" --country de -f markdown
 
 # Mobile user-agent (for m-dot sites or anti-bot variation)
 bdata scrape "https://example.com" --mobile -f markdown
 
-# Very slow page — submit async, get a job ID, poll later
-job_id=$(bdata scrape "https://slow-site.example" --async --json | jq -r '.job_id')
-bdata status "$job_id"   # poll until status == "done"
+# Very slow page — submit async, get a response ID, poll until complete
+response_id=$(bdata scrape "https://slow-site.example" --async --json | jq -r '.response_id')
+bdata status "$response_id" --wait   # poll until the snapshot is ready
 ```
 
 Full flag reference: [`references/flags.md`](references/flags.md).
@@ -73,11 +76,11 @@ Full flag reference: [`references/flags.md`](references/flags.md).
    - `cloudflare` *(with < 2KB total body)*
 3. **Expected markers present** for the task: e.g., a product page should contain a price pattern (`\$\d`); an article should contain at least one `<h1>` or `# ` heading.
 4. **On failure, escalation ladder:**
-   - Retry with `--country us` (or another country)
+   - Retry with a different `--country` (e.g., `--country de` if the origin site is US)
    - Retry with `--mobile`
    - Escalate to `bdata browser` for full JS rendering (hand off to `brightdata-cli` skill)
 
-Do not report success until all three checks pass.
+Do not report success until all checks above pass.
 
 ## Red flags
 
