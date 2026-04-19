@@ -21,7 +21,7 @@ Halt and route to `skills/bright-data-best-practices/references/cli-setup.md` if
 
 ## Supported pipeline types (verified 2026-04-19)
 
-**Always verify with `bdata pipelines list` before hardcoding names** — they change. Current 42 types:
+**Always verify with `bdata pipelines list` before hardcoding names** — they change. Current 43 types:
 
 `amazon_product`, `amazon_product_reviews`, `amazon_product_search`, `apple_app_store`, `bestbuy_products`, `booking_hotel_listings`, `crunchbase_company`, `ebay_product`, `etsy_products`, `facebook_company_reviews`, `facebook_events`, `facebook_marketplace_listings`, `facebook_posts`, `github_repository_file`, `google_maps_reviews`, `google_play_store`, `google_shopping`, `homedepot_products`, `instagram_comments`, `instagram_posts`, `instagram_profiles`, `instagram_reels`, `linkedin_company_profile`, `linkedin_job_listings`, `linkedin_people_search`, `linkedin_person_profile`, `linkedin_posts`, `reddit_posts`, `reuter_news`, `tiktok_comments`, `tiktok_posts`, `tiktok_profiles`, `tiktok_shop`, `walmart_product`, `walmart_seller`, `x_posts`, `yahoo_finance_business`, `youtube_comments`, `youtube_profiles`, `youtube_videos`, `zara_products`, `zillow_properties_listing`, `zoominfo_company_profile`
 
@@ -152,6 +152,6 @@ Full flag reference + full type table: [`references/flags.md`](references/flags.
 
 ## References
 
-- [`references/flags.md`](references/flags.md) — full `pipelines` flags + complete table of all 42 types with input shapes.
+- [`references/flags.md`](references/flags.md) — full `pipelines` flags + complete table of all 43 types with input shapes.
 - [`references/patterns.md`](references/patterns.md) — sync timeout tuning, shell-loop batching with parallelism cap, partial-failure detection, keyword-shaped pipeline cheatsheet, legacy `curl` fallback, shared verification checklist.
 - [`references/examples.md`](references/examples.md) — (1) single Amazon product, (2) batch LinkedIn companies, (3) long reviews job with raised timeout, (4) mixed-platform workflow calling `pipelines list` first, (5) keyword-shaped `amazon_product_search`.
