@@ -53,7 +53,7 @@ bdata scrape "https://example.com" -f screenshot -o page.png
 # Geo-targeted (override the exit country)
 bdata scrape "https://example.com" --country de -f markdown
 
-# Mobile user-agent (for m-dot sites or anti-bot variation)
+# Mobile user-agent (may be a no-op in v0.1.8 — see references/flags.md)
 bdata scrape "https://example.com" --mobile -f markdown
 
 # Very slow page — submit async, get a response ID, poll until complete
@@ -77,7 +77,7 @@ Full flag reference: [`references/flags.md`](references/flags.md).
 3. **Expected markers present** for the task: e.g., a product page should contain a price pattern (`\$\d`); an article should contain at least one `<h1>` or `# ` heading.
 4. **On failure, escalation ladder:**
    - Retry with a different `--country` (e.g., `--country de` if the origin site is US)
-   - Retry with `--mobile`
+   - Retry with `--mobile` *(note: may be no-op in v0.1.8; see `references/flags.md`)*
    - Escalate to `bdata browser` for full JS rendering (hand off to `brightdata-cli` skill)
 
 Do not report success until all checks above pass.

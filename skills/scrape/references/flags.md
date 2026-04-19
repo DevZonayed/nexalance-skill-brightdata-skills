@@ -9,7 +9,7 @@ Usage: `bdata scrape [options] <url>`
 | `-f, --format <format>` | `markdown`, `html`, `screenshot`, `json` | `markdown` | `markdown` for readable content; `html` when you need DOM fidelity; `screenshot` to save a PNG; `json` when the Unlocker has a structured extractor for the URL. |
 | `--country <code>` | ISO code (`us`, `de`, `jp`, …) | — | Force a geo-targeted exit. Use when the target site geoblocks, personalizes by country, or returns different content by region. |
 | `--zone <name>` | Unlocker zone name | account default | Override the default zone — e.g., when you have a dedicated zone with different residential/mobile settings. |
-| `--mobile` | (flag) | off | Use a mobile user agent. Use for m-dot sites or when desktop UA gets blocked. |
+| `--mobile` | (flag) | off | Use a mobile user agent. Use for m-dot sites or when desktop UA gets blocked. *(Note: in `@brightdata/cli` v0.1.8 this flag is declared but not yet forwarded to the Web Unlocker request — verify behavior before relying on it.)* |
 | `--async` | (flag) | off | Submit asynchronously; returns a `response_id`. Poll with `bdata status <response_id> --wait`. Use only for pages routinely > 30s or when queuing many long-running jobs. |
 | `-o, --output <path>` | file path | stdout | Write result to a file. Required for binary formats (`screenshot`). Recommended for anything > 1KB. |
 | `--json` | (flag) | off | Force JSON output envelope (metadata + content). Useful in scripts. |
