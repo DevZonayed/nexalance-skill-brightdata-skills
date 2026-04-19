@@ -28,7 +28,7 @@ Bright Data provides infrastructure for web data extraction at scale. Four prima
 
 ## Authentication Pattern (All APIs)
 
-All APIs share the same authentication model:
+All APIs share the same authentication model. The env vars below apply to direct REST API integrations — if you are using the `bdata` CLI, `bdata login` handles all of these automatically (see [`references/cli-setup.md`](references/cli-setup.md)).
 
 ```bash
 export BRIGHTDATA_API_KEY="your-api-key"         # From Control Panel > Account Settings
