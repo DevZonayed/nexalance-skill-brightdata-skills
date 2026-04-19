@@ -18,19 +18,24 @@ Usage: `bdata search [options] <query>`
 | `-o, --output <path>` | file path | stdout | Write to file. |
 | `--json` | (flag) | off | Force JSON envelope. |
 | `--pretty` | (flag) | off | Pretty-print JSON. |
+| `--timing` | (flag) | off | Print request timing breakdown to stderr. Debugging only. |
 | `-k, --api-key <key>` | API key | saved / env | Per-command override. |
 
 ### SERP JSON output shape
 
-When invoked with `--json`, `bdata search` returns an envelope with top-level keys:
+When invoked with `--json`, `bdata search` returns an envelope with these top-level keys (from the `Search_response` type):
 
-- `general` — query metadata (result count, timing, spell-correction, …)
-- `organic` — the main result array; each entry has `title`, `link`, `description`, `rank`
-- `navigation`, `pagination`, `related` — auxiliary UI elements
+- `general` — query metadata (search engine, query, results count, language, device)
+- `organic` — main result array. Each entry has `rank`, `title`, `link`, `description` (some also have `global_rank`)
+- Vertical result arrays (present depending on the query and `--type`): `news`, `images`, `shopping`, `videos`, `recipes`, `maps`, `paid`, `product_listing_ads`
+- Semantic blocks: `knowledge_graph`, `people_also_ask`, `related_searches`, `perspectives`
 
-To extract just the links from the main results: `jq -r '.organic[].link'`.
+Each vertical has its own record shape:
+- `news` → `title`, `link`, `source`, `date`, `image`
+- `images` → `title`, `link`, `source`, `original_image`, `image`
+- `shopping` → `title`, `link`, `price`, `shop`, `rating`, `reviews_cnt`
 
-News/images/shopping verticals use different top-level keys (`news`, `images`, `shopping`) but the same record shape.
+To extract just the links from the main organic results: `jq -r '.organic[].link'`. For news: `jq -r '.news[].link'`.
 
 ## `bdata discover` — AI intent-ranked discovery
 
@@ -50,6 +55,7 @@ Usage: `bdata discover [options] <query>`
 | `--end-date <YYYY-MM-DD>` | ISO date | — | Only content updated through this date. |
 | `--timeout <sec>` | integer | `600` | Max seconds to wait for the target `--num-results`. |
 | `-o, --output <path>` | file path | stdout | Write to file. Required for larger result sets. |
+| `--timing` | (flag) | off | Print request timing breakdown to stderr. Debugging only. |
 | `--json` / `--pretty` | flags | — | JSON formatting. |
 
 ### Discover JSON output shape
