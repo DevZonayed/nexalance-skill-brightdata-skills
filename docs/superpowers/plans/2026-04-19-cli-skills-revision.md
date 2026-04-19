@@ -47,12 +47,12 @@ All tasks reference the CLI as verified on 2026-04-19. Do NOT invent flags. Rele
 
 | Command | Required args | Flags (verified) |
 |---|---|---|
-| `bdata scrape <url>` | url | `-f/--format <markdown\|html\|screenshot\|json>`, `--country <iso>`, `--zone <name>`, `--mobile`, `--async`, `-o/--output <path>`, `--json`, `--pretty`, `--timing`, `-k/--api-key` |
+| `bdata scrape <url>` | url | `-f/--format <markdown\|html\|screenshot\|json>`, `--country <iso>`, `--zone <name>`, `-o/--output <path>`, `--json`, `--pretty`, `--timing`, `-k/--api-key` — **`--mobile` and `--async` declared but non-functional in v0.1.8** |
 | `bdata search <query>` | query | `--engine <google\|bing\|yandex>`, `--country`, `--language`, `--page <n>` (0-indexed), `--type <web\|news\|images\|shopping>`, `--zone`, `--device <desktop\|mobile>`, `-o/--output`, `--json`, `--pretty` |
 | `bdata discover <query>` | query | `--intent <text>`, `--country`, `--city`, `--language`, `--num-results <n>`, `--filter-keywords <csv>`, `--include-content`, `--no-remove-duplicates`, `--start-date <YYYY-MM-DD>`, `--end-date <YYYY-MM-DD>`, `--timeout <sec>`, `-o/--output`, `--json`, `--pretty` |
 | `bdata pipelines <type> [params...]` | type + type-specific params | `--format <json\|csv\|ndjson\|jsonl>`, `--timeout <sec>`, `-o/--output`, `--json`, `--pretty`, `--timing` |
 | `bdata pipelines list` | — | prints all pipeline types |
-| `bdata status <job-id>` | job-id | polls a scrape `--async` snapshot job |
+| `bdata status <job-id>` | job-id | polls an async snapshot job (note: `--async` is non-functional in v0.1.8) |
 | `bdata config` | — | prints current config JSON |
 | `bdata zones` | — | lists zones (requires auth; useful as an auth-check probe) |
 | `bdata login` / `--device` / `--api-key <k>` | — | OAuth / device code / non-interactive auth |
@@ -67,7 +67,7 @@ All tasks reference the CLI as verified on 2026-04-19. Do NOT invent flags. Rele
 - `amazon_product_search <keyword> <domain_url>` (`pages_to_search` is hardcoded to 1 by the CLI and is not a user-visible arg)
 - `linkedin_people_search` — multi-arg
 - `facebook_company_reviews <url> <number_of_reviews>`
-- `google_maps_reviews <url> <days_range>`
+- `google_maps_reviews <url> [days_limit]` (optional; defaults to `3`)
 - `youtube_comments <url> <number_of_comments>`
 
 **Shared block-page signature list (used verbatim in all three skills' verification gates):**
@@ -174,10 +174,10 @@ fi
 ## Troubleshooting
 
 **`command not found: bdata`**
-— CLI isn't on PATH. If installed via `npm -g`, ensure npm's global bin is on PATH (`npm bin -g`). If unsure, reinstall with `npm install -g @brightdata/cli`.
+— CLI isn't on PATH. If installed via `npm -g`, find the install root with `npm config get prefix` and ensure `<prefix>/bin` is on your PATH. If unsure, reinstall with `npm install -g @brightdata/cli`.
 
 **`Error: not authenticated` / 401 responses**
-— Run `bdata login` (or `bdata login --device` in SSH). If an env var `BRIGHTDATA_API_KEY` is set but invalid, it takes precedence over saved credentials — unset it or run `bdata login --api-key <valid-key>`.
+— Run `bdata login` (or `bdata login --device` in SSH). If an env var `BRIGHTDATA_API_KEY` is set but invalid, it takes precedence over saved credentials on every command — you must unset it first (`unset BRIGHTDATA_API_KEY`) and then run `bdata login`.
 
 **`Error: no zones`**
 — `bdata login` provisions zones automatically. If they were deleted in the dashboard, re-run `bdata login` or create zones manually via the dashboard, then set the defaults with `bdata config set default_zone_unlocker <name>`.
@@ -192,7 +192,8 @@ fi
 
 Before the CLI, skills required:
 - `BRIGHTDATA_API_KEY` — Bright Data API key
-- `BRIGHTDATA_UNLOCKER_ZONE` — Web Unlocker zone name
+- `BRIGHTDATA_UNLOCKER_ZONE` — Web Unlocker zone name (also used as SERP fallback)
+- `BRIGHTDATA_SERP_ZONE` — (optional) dedicated SERP zone; preferred over the unlocker zone for `bdata search`
 - `BRIGHTDATA_POLLING_TIMEOUT` — (optional) pipeline polling cap in seconds
 
 These are still honored by legacy `curl`-based paths documented in each skill's `references/patterns.md`. The CLI path is preferred; env vars are retained for environments where Node/CLI aren't available.
@@ -203,6 +204,7 @@ Mapping:
 |---|---|
 | `BRIGHTDATA_API_KEY` | `bdata login` (stored in credentials file) or `-k/--api-key` per-command |
 | `BRIGHTDATA_UNLOCKER_ZONE` | Auto-provisioned by `bdata login`; override per-command with `--zone <name>` |
+| `BRIGHTDATA_SERP_ZONE` | Auto-provisioned by `bdata login`; override per-command with `--zone <name>` on `bdata search` |
 | `BRIGHTDATA_POLLING_TIMEOUT` | Still read by `bdata pipelines`; also overridable via `--timeout <sec>` |
 ````
 
@@ -325,12 +327,8 @@ bdata scrape "https://example.com" -f json --pretty -o page.json
 # Geo-targeted (override the exit country)
 bdata scrape "https://example.com" --country de -f markdown
 
-# Mobile user-agent (for m-dot sites or anti-bot variation)
-bdata scrape "https://example.com" --mobile -f markdown
-
-# Very slow page — submit async, get a job ID, poll later
-job_id=$(bdata scrape "https://slow-site.example" --async --json | jq -r '.job_id')
-bdata status "$job_id"   # poll until status == "done"
+# Visual snapshot (saves PNG)
+bdata scrape "https://example.com" -f screenshot -o page.png
 ```
 
 Full flag reference: [`references/flags.md`](references/flags.md).
@@ -348,18 +346,16 @@ Full flag reference: [`references/flags.md`](references/flags.md).
    - `cloudflare` *(with < 2KB total body)*
 3. **Expected markers present** for the task: e.g., a product page should contain a price pattern (`\$\d`); an article should contain at least one `<h1>` or `# ` heading.
 4. **On failure, escalation ladder:**
-   - Retry with `--country us` (or another country)
-   - Retry with `--mobile`
+   - Retry with a different `--country` (e.g., `--country de` if the origin site is US)
    - Escalate to `bdata browser` for full JS rendering (hand off to `brightdata-cli` skill)
 
-Do not report success until all three checks pass.
+Do not report success until all checks above pass.
 
 ## Red flags
 
 - Claiming success without inspecting the output.
 - Silencing errors with `2>/dev/null` — you'll miss auth failures and rate-limit errors.
 - Running `bdata scrape` on Amazon/LinkedIn/TikTok/Instagram/YouTube/Reddit URLs — these are supported by `data-feeds` and return structured data directly. Scraping loses the structure.
-- Using `--async` for normal pages — adds latency for no gain. Only use `--async` for pages that routinely take > 30s or when queuing many long-running jobs.
 - Scraping the same URL repeatedly in the same task — cache the first result.
 - Looping `bdata scrape` sequentially for large lists instead of using `xargs -P 4` (or similar) with a parallelism cap.
 - Using `curl` against `api.brightdata.com` directly — legacy path; only when the CLI isn't available.
@@ -367,7 +363,7 @@ Do not report success until all three checks pass.
 ## References
 
 - [`references/flags.md`](references/flags.md) — every flag with when-to-use notes.
-- [`references/patterns.md`](references/patterns.md) — shell-loop batching, `xargs` parallelism, pagination recipe, `--async` polling, retry/backoff, block-page recovery chain, legacy `curl` fallback.
+- [`references/patterns.md`](references/patterns.md) — shell-loop batching, `xargs` parallelism, pagination recipe, retry/backoff, block-page recovery chain, legacy `curl` fallback.
 - [`references/examples.md`](references/examples.md) — (1) single page → markdown, (2) batch a list of URLs with parallelism cap, (3) paginated listing, (4) block-page recovery.
 ````
 
@@ -409,24 +405,13 @@ Usage: `bdata scrape [options] <url>`
 | `-f, --format <format>` | `markdown`, `html`, `screenshot`, `json` | `markdown` | `markdown` for readable content; `html` when you need DOM fidelity; `screenshot` to save a PNG; `json` when the Unlocker has a structured extractor for the URL. |
 | `--country <code>` | ISO code (`us`, `de`, `jp`, …) | — | Force a geo-targeted exit. Use when the target site geoblocks, personalizes by country, or returns different content by region. |
 | `--zone <name>` | Unlocker zone name | account default | Override the default zone — e.g., when you have a dedicated zone with different residential/mobile settings. |
-| `--mobile` | (flag) | off | Use a mobile user agent. Use for m-dot sites or when desktop UA gets blocked. |
-| `--async` | (flag) | off | Submit asynchronously; returns a `job_id`. Poll with `bdata status <job-id>`. Use only for pages routinely > 30s or when queuing many long-running jobs. |
+| `--mobile` | (flag) | off | **Not functional in v0.1.8** — flag is declared but `build_request` in the CLI does not forward it. Do not rely on it. |
+| `--async` | (flag) | off | **Not functional in v0.1.8** — the Web Unlocker API currently rejects the `async` field with a validation error. Do not use until the CLI ships a fix. |
 | `-o, --output <path>` | file path | stdout | Write result to a file. Required for binary formats (`screenshot`). Recommended for anything > 1KB. |
 | `--json` | (flag) | off | Force JSON output envelope (metadata + content). Useful in scripts. |
 | `--pretty` | (flag) | off | Pretty-print JSON. Combine with `--json` or `-f json`. |
 | `--timing` | (flag) | off | Print request timing breakdown to stderr. Debugging only. |
 | `-k, --api-key <key>` | API key | saved credentials or `BRIGHTDATA_API_KEY` | Per-command override. Rarely needed — prefer `bdata login`. |
-
-## `--async` polling recipe
-
-```bash
-job_id=$(bdata scrape "https://slow.example" --async --json | jq -r '.job_id')
-
-# Poll until done (handled by bdata status itself; it exits when ready)
-bdata status "$job_id" --json --pretty -o result.json
-```
-
-`bdata status` is the dedicated polling command for async scrape snapshots.
 
 ## Format decision matrix
 
@@ -474,7 +459,7 @@ Before claiming a scrape succeeded:
    - `cloudflare` *(with total body < 2KB)*
 3. **Expected markers present** for the task (e.g., price pattern on a product page, at least one heading in an article).
 
-Failing any check → retry with `--country`, then `--mobile`, then escalate to `bdata browser`.
+Failing any check → retry with `--country`, then escalate to `bdata browser`.
 
 ## Small-batch shell loop (≤ ~20 URLs)
 
@@ -546,17 +531,17 @@ scrape_with_retry() {
 
 When a scrape returns a block-page signature:
 
-1. Retry same URL with `--country us` (or another ISO code appropriate to the site).
-2. If still blocked, retry with `--mobile`.
-3. If still blocked, escalate to `bdata browser` (real-browser with JS execution).
+1. Retry same URL with a different `--country` (e.g. `de` if origin is US).
+2. If still blocked, escalate to `bdata browser` (real-browser with JS execution).
 
 Example:
 
 ```bash
 try_scrape() {
     local url=$1 out=$2
-    for args in "" "--country us" "--mobile" "--country us --mobile"; do
-        bdata scrape "$url" $args -f markdown -o "$out"
+    for args in "" "--country de" "--country jp" "--country gb"; do
+        bdata scrape "$url" $args -f markdown -o "$out" || continue
+        [[ -s "$out" ]] || continue
         if ! grep -qiE 'access denied|just a moment|captcha|cloudflare' "$out"; then
             return 0
         fi
@@ -565,7 +550,7 @@ try_scrape() {
 }
 ```
 
-If all four attempts return block pages, hand off to the `bdata browser` command.
+If all country rotations return block pages, hand off to the `bdata browser` command.
 
 ## Legacy `curl` fallback (deprecated)
 
@@ -664,21 +649,22 @@ done
 
 ## Example 4 — block-page recovery chain
 
-Scrape a URL that's intermittently Cloudflare-gated. Try four geo/UA combinations; if all return block pages, hand off to `bdata browser`:
+Scrape a URL that's intermittently Cloudflare-gated. Try a set of exit countries; if all return block pages, hand off to `bdata browser`:
 
 ```bash
 URL="https://protected.example.com/catalog"
 OUT="catalog.md"
 
-for args in "" "--country us" "--mobile" "--country us --mobile"; do
-    bdata scrape "$URL" $args -f markdown -o "$OUT"
+for args in "" "--country de" "--country jp" "--country gb"; do
+    bdata scrape "$URL" $args -f markdown -o "$OUT" || continue
+    [[ -s "$OUT" ]] || continue
     if ! grep -qiE 'access denied|just a moment|captcha|cloudflare' "$OUT"; then
         echo "Succeeded with: $args"
         exit 0
     fi
 done
 
-echo "All scrape variants returned block pages — escalating to bdata browser" >&2
+echo "All country rotations returned block pages — escalating to bdata browser" >&2
 # (caller hands off to the bdata browser command, documented in the brightdata-cli skill)
 exit 1
 ```
@@ -1217,7 +1203,7 @@ A few pipelines take non-URL inputs. Verify with `bdata pipelines <type> --help`
 | `amazon_product_search` | two positional args: `<keyword> <domain_url>` (the CLI hardcodes `pages_to_search` to 1) — e.g., `"running shoes" "https://www.amazon.com"` |
 | `linkedin_people_search` | multi-arg (run once with no args to see required positional params) |
 | `facebook_company_reviews` | `<url> <number_of_reviews>` |
-| `google_maps_reviews` | `<url> <days_range>` |
+| `google_maps_reviews` | `<url> [days_limit]` (optional; defaults to `3`) |
 | `youtube_comments` | `<url> <number_of_comments>` |
 
 All other pipelines take a single URL.
@@ -1258,7 +1244,7 @@ bdata pipelines linkedin_company_profile \
 bdata pipelines instagram_posts \
     "https://www.instagram.com/example/" -o posts.json
 
-# Google Maps reviews (keyword-shaped: url + days_range)
+# Google Maps reviews (url + optional days_limit, default 3)
 bdata pipelines google_maps_reviews \
     "https://maps.google.com/?cid=1234567890" 90 -o reviews.json
 
@@ -1415,7 +1401,7 @@ Always cross-check with `bdata pipelines list` before hardcoding names.
 | `amazon_product_search` | two positional args: `<keyword> <domain_url>` (the CLI hardcodes `pages_to_search` to 1) — e.g., `"noise cancelling headphones" "https://www.amazon.com"` |
 | `linkedin_people_search` | multi-arg — run without args to see required positionals |
 | `facebook_company_reviews` | `<url> <number_of_reviews>` |
-| `google_maps_reviews` | `<url> <days_range>` |
+| `google_maps_reviews` | `<url> [days_limit]` (optional; defaults to `3`) |
 | `youtube_comments` | `<url> <number_of_comments>` |
 
 When in doubt about a pipeline's args, invoke it with no params — the CLI prints the expected usage line.
