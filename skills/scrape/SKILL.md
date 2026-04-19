@@ -53,12 +53,6 @@ bdata scrape "https://example.com" -f screenshot -o page.png
 # Geo-targeted (override the exit country)
 bdata scrape "https://example.com" --country de -f markdown
 
-# Mobile user-agent (may be a no-op in v0.1.8 — see references/flags.md)
-bdata scrape "https://example.com" --mobile -f markdown
-
-# Very slow page — submit async, get a response ID, poll until complete
-response_id=$(bdata scrape "https://slow-site.example" --async --json | jq -r '.response_id')
-bdata status "$response_id" --wait   # poll until the snapshot is ready
 ```
 
 Full flag reference: [`references/flags.md`](references/flags.md).
@@ -77,7 +71,6 @@ Full flag reference: [`references/flags.md`](references/flags.md).
 3. **Expected markers present** for the task: e.g., a product page should contain a price pattern (`\$\d`); an article should contain at least one `<h1>` or `# ` heading.
 4. **On failure, escalation ladder:**
    - Retry with a different `--country` (e.g., `--country de` if the origin site is US)
-   - Retry with `--mobile` *(note: may be no-op in v0.1.8; see `references/flags.md`)*
    - Escalate to `bdata browser` for full JS rendering (hand off to `brightdata-cli` skill)
 
 Do not report success until all checks above pass.
@@ -87,7 +80,6 @@ Do not report success until all checks above pass.
 - Claiming success without inspecting the output.
 - Silencing errors with `2>/dev/null` — you'll miss auth failures and rate-limit errors.
 - Running `bdata scrape` on Amazon/LinkedIn/TikTok/Instagram/YouTube/Reddit URLs — these are supported by `data-feeds` and return structured data directly. Scraping loses the structure.
-- Using `--async` for normal pages — adds latency for no gain. Only use `--async` for pages that routinely take > 30s or when queuing many long-running jobs.
 - Scraping the same URL repeatedly in the same task — cache the first result.
 - Looping `bdata scrape` sequentially for large lists instead of using `xargs -P 4` (or similar) with a parallelism cap.
 - Using `curl` against `api.brightdata.com` directly — legacy path; only when the CLI isn't available.
@@ -95,5 +87,5 @@ Do not report success until all checks above pass.
 ## References
 
 - [`references/flags.md`](references/flags.md) — every flag with when-to-use notes.
-- [`references/patterns.md`](references/patterns.md) — shell-loop batching, `xargs` parallelism, pagination recipe, `--async` polling, retry/backoff, block-page recovery chain, legacy `curl` fallback.
+- [`references/patterns.md`](references/patterns.md) — shell-loop batching, `xargs` parallelism, pagination recipe, retry/backoff, block-page recovery chain, legacy `curl` fallback.
 - [`references/examples.md`](references/examples.md) — (1) single page → markdown, (2) batch a list of URLs with parallelism cap, (3) paginated listing, (4) block-page recovery.
