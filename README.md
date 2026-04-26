@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://brightdata.com"><img src="https://img.shields.io/badge/Powered%20by-Bright%20Data-3D7FFC?style=for-the-badge" alt="Powered by Bright Data"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License"></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/Skills-11-9D97F4?style=for-the-badge" alt="11 Skills"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/Skills-12-9D97F4?style=for-the-badge" alt="12 Skills"></a>
   <a href="#data-feeds-skill"><img src="https://img.shields.io/badge/Datasets-40+-15C1E6?style=for-the-badge" alt="40+ Datasets"></a>
   <a href="#bright-data-mcp-skill"><img src="https://img.shields.io/badge/MCP_Tools-60+-FF6B35?style=for-the-badge" alt="60+ MCP Tools"></a>
 </p>
@@ -62,6 +62,7 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 | **`python-sdk-best-practices`** | Comprehensive guide for the `brightdata-sdk` Python package — async/sync clients, platform scrapers, SERP, datasets, Scraper Studio, Browser API, error handling, and common patterns |
 | **`brightdata-cli`** | Guide for using the Bright Data CLI (`brightdata` / `bdata`) to scrape, search, extract structured data from 40+ platforms, manage proxy zones, and check account budget — all from the terminal |
 | **`competitive-intel`** | Real-time competitive intelligence using live web data — competitor snapshots, pricing comparison, review mining, hiring signal analysis, content & SEO battles, and market landscape mapping. Replaces $15K+/yr enterprise CI tools at pennies per analysis |
+| **`seo-audit`** | Comprehensive SEO audit using live web data — sitemap-stratified sampling, JS-injected schema detection (Yoast/RankMath/AIOSEO), hreflang validation, signal-driven SERP ranking checks, HTML-level Core Web Vitals proxies. Auto-routes between single-page and site-wide audits |
 | **`design-mirror`** | Replicates design system patterns, tokens, and components to build consistent, high-quality UIs |
 | **`brd-browser-debug`** | Debug Bright Data Scraping Browser sessions — smart triage of failures, per-session bandwidth tracking, captcha reporting, and pattern detection using the Browser Sessions API |
 
