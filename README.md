@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://brightdata.com"><img src="https://img.shields.io/badge/Powered%20by-Bright%20Data-3D7FFC?style=for-the-badge" alt="Powered by Bright Data"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License"></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/Skills-12-9D97F4?style=for-the-badge" alt="12 Skills"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/Skills-13-9D97F4?style=for-the-badge" alt="13 Skills"></a>
   <a href="#data-feeds-skill"><img src="https://img.shields.io/badge/Datasets-40+-15C1E6?style=for-the-badge" alt="40+ Datasets"></a>
   <a href="#bright-data-mcp-skill"><img src="https://img.shields.io/badge/MCP_Tools-60+-FF6B35?style=for-the-badge" alt="60+ MCP Tools"></a>
 </p>
@@ -19,6 +19,7 @@
 <p align="center">
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-skills">Skills</a> •
+  <a href="#agent-onboarding-skill">Agent Onboarding</a> •
   <a href="#-data-feeds">Data Feeds</a> •
   <a href="#bright-data-mcp-skill">MCP</a> •
   <a href="#brightdata-cli-skill">CLI</a> •
@@ -53,6 +54,7 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 
 | Skill | Description |
 |-------|-------------|
+| **`agent-onboarding`** | Entry point for agents new to Bright Data — one install command, then routes to the right path: live CLI tools, app integration, MCP server, auth-only, or REST without installing |
 | **`search`** | Search Google and get structured JSON results with titles, links, and descriptions |
 | **`scrape`** | Scrape any webpage as clean markdown with automatic bot detection bypass |
 | **`data-feeds`** | Extract structured data from 40+ websites with automatic polling |
@@ -65,6 +67,52 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 | **`seo-audit`** | Comprehensive SEO audit using live web data — sitemap-stratified sampling, JS-injected schema detection (Yoast/RankMath/AIOSEO), hreflang validation, signal-driven SERP ranking checks, HTML-level Core Web Vitals proxies. Auto-routes between single-page and site-wide audits |
 | **`design-mirror`** | Replicates design system patterns, tokens, and components to build consistent, high-quality UIs |
 | **`brd-browser-debug`** | Debug Bright Data Scraping Browser sessions — smart triage of failures, per-session bandwidth tracking, captcha reporting, and pattern detection using the Browser Sessions API |
+
+---
+
+## Agent Onboarding Skill
+
+The `agent-onboarding` skill is the **entry point** for any coding agent that's new to Bright Data. It runs the install once, walks the human through OAuth, verifies the environment, and then routes the agent to the right narrower skill instead of dumping everything into one place.
+
+### How it works
+
+One install command sets up the CLI, agent skills, and authentication:
+
+```bash
+# macOS / Linux
+curl -fsSL https://cli.brightdata.com/install.sh | bash
+
+# Cross-platform
+npm install -g @brightdata/cli
+
+# Then authenticate once (browser OAuth)
+bdata login
+
+# Headless / SSH
+bdata login --device
+```
+
+`bdata login` saves the API key locally, auto-creates the `cli_unlocker` and `cli_browser` zones, and sets defaults — no token plumbing required.
+
+### Path routing
+
+After install, the skill routes the agent based on the task:
+
+| Situation | Path | Hands off to |
+|---|---|---|
+| Need web data **during this session** | **A** — live CLI tools | `brightdata-cli`, `search`, `scrape`, `data-feeds`, `competitive-intel`, `seo-audit` |
+| Need to **add Bright Data to app code** | **B** — SDK / REST integration | `python-sdk-best-practices`, `bright-data-best-practices`, `scraper-builder` |
+| Want a **drop-in tool layer for an LLM agent** | **M** — MCP server | `bright-data-mcp` |
+| Need an **API key first** | **C** — auth only | dashboard or `bdata login` |
+| Don't want to install anything | **D** — REST API directly | direct calls to `api.brightdata.com` |
+
+### Why this skill matters
+
+Without onboarding, agents either skip auth and crash on the first request, or pick the wrong path (calling REST when the CLI would do, or scraping a site that has a pre-built dataset). This skill makes the first 60 seconds deterministic: install, log in, verify, then hand off.
+
+### Reference files
+
+- [skills/agent-onboarding/SKILL.md](skills/agent-onboarding/SKILL.md) — install, auth, path routing, and the post-onboarding skill map
 
 ---
 
@@ -590,6 +638,8 @@ brightdata-plugin/
 │   ├── plugin.json              # Plugin configuration
 │   └── marketplace.json         # Marketplace metadata
 ├── skills/
+│   ├── agent-onboarding/
+│   │   └── SKILL.md             # Onboarding entry point — install, auth, path routing
 │   ├── search/
 │   │   ├── SKILL.md             # Search skill
 │   │   └── scripts/
@@ -728,6 +778,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Bright Data](https://brightdata.com) - Official website
 - [Documentation](https://docs.brightdata.com) - API documentation
+- [Agent Onboarding](skills/agent-onboarding/SKILL.md) - First-time setup and path routing for coding agents
 - [Dashboard](https://brightdata.com/cp) - Manage your account
 - [Web Unlocker](https://brightdata.com/products/web-unlocker) - Learn about Web Unlocker
 - [SERP API](https://brightdata.com/products/serp-api) - Learn about SERP API
