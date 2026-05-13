@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://brightdata.com"><img src="https://img.shields.io/badge/Powered%20by-Bright%20Data-3D7FFC?style=for-the-badge" alt="Powered by Bright Data"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License"></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/Skills-13-9D97F4?style=for-the-badge" alt="13 Skills"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/Skills-14-9D97F4?style=for-the-badge" alt="14 Skills"></a>
   <a href="#data-feeds-skill"><img src="https://img.shields.io/badge/Datasets-40+-15C1E6?style=for-the-badge" alt="40+ Datasets"></a>
   <a href="#bright-data-mcp-skill"><img src="https://img.shields.io/badge/MCP_Tools-60+-FF6B35?style=for-the-badge" alt="60+ MCP Tools"></a>
 </p>
@@ -25,6 +25,7 @@
   <a href="#brightdata-cli-skill">CLI</a> •
   <a href="#competitive-intel-skill">Competitive Intel</a> •
   <a href="#scraper-builder-skill">Scraper Builder</a> •
+  <a href="#scraper-studio-skill">Scraper Studio</a> •
   <a href="#best-practices-skill">Best Practices</a> •
   <a href="#python-sdk-best-practices-skill">Python SDK</a> •
   <a href="#-setup">Setup</a> •
@@ -60,6 +61,7 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 | **`data-feeds`** | Extract structured data from 40+ websites with automatic polling |
 | **`bright-data-mcp`** | Orchestrate 60+ Bright Data MCP tools for search, scraping, structured extraction, and browser automation |
 | **`scraper-builder`** | Build production-ready scrapers for any website — guides through site analysis, API selection, selector extraction, pagination, and complete implementation. Triggers on "build a scraper for..." |
+| **`scraper-studio`** | Build and run AI-generated Bright Data scrapers from the terminal via `bdata scraper create` (generate from a natural-language description) and `bdata scraper run` (execute against a URL). Handles async + poll, `--sync` fast-path, and silent auto-fallback to batch for paginated pages |
 | **`bright-data-best-practices`** | Built-in reference for Web Unlocker, SERP API, Web Scraper API, and Browser API — Claude consults this automatically when writing Bright Data code |
 | **`python-sdk-best-practices`** | Comprehensive guide for the `brightdata-sdk` Python package — async/sync clients, platform scrapers, SERP, datasets, Scraper Studio, Browser API, error handling, and common patterns |
 | **`brightdata-cli`** | Guide for using the Bright Data CLI (`brightdata` / `bdata`) to scrape, search, extract structured data from 40+ platforms, manage proxy zones, and check account budget — all from the terminal |
@@ -322,6 +324,51 @@ The skill follows a 6-phase workflow:
 - [skills/scraper-builder/references/supported-domains.md](skills/scraper-builder/references/supported-domains.md) — Pre-built scraper lookup + dynamic Dataset List API
 - [skills/scraper-builder/references/site-analysis-guide.md](skills/scraper-builder/references/site-analysis-guide.md) — HTML analysis playbook, selector strategy, hidden API discovery
 - [skills/scraper-builder/references/pagination-patterns.md](skills/scraper-builder/references/pagination-patterns.md) — 7 pagination strategies with complete code examples
+
+---
+
+## Scraper Studio Skill
+
+The `scraper-studio` skill teaches Claude how to use Bright Data's AI-generated scrapers from the terminal — turn a URL + plain-English description into a reusable scraper, then run it against any URL.
+
+### Two commands, one workflow
+
+```bash
+# 1. Build a scraper from a natural-language description
+bdata scraper create https://example.com/product/1 \
+    "Extract title, price, currency, image URL, and availability"
+
+# → prints a collector_id like c_mp3tuab31lswoxvpws
+
+# 2. Run that scraper on any URL
+bdata scraper run c_mp3tuab31lswoxvpws https://example.com/product/2 \
+    --pretty -o product.json
+```
+
+The bridge between the two is `collector_id` — printed by `create`, consumed by `run`. The skill ensures Claude always captures and surfaces it (it's recoverable from every failure path, even partial generations).
+
+### What the skill covers
+
+| Behavior | How it's handled |
+|---|---|
+| **AI generation flow** | `create` chains `POST /dca/collector` → `POST .../automate_template` → poll `.../automate_template/progress` for `status: "done"`. Typical generation: 5–10 min. |
+| **Default run mode** | Async + poll: `POST /dca/trigger_immediate` → poll `/dca/get_result`. Safe for any duration. |
+| **`--sync` fast path** | `POST /dca/crawl` for pages expected to finish in < 50 s. On 202 timeout, returns a `response_id` — re-run without `--sync` to pick it up. |
+| **`--sync-timeout`** | Bounded to `[25, 50]` seconds. Skill explicitly documents the range. |
+| **Auto-fallback to batch** | When a URL expands past the realtime page limit (paginated listings, infinite scroll), the CLI silently falls back to `/dca/trigger` + `/dca/dataset` polling. No flag required. |
+| **Failure recovery** | Both `collector_id` and `response_id` are always printed on error — the skill teaches Claude to surface them and resume via the web UI (`https://brightdata.com/cp/scrapers/{collector_id}`) instead of restarting. |
+| **Routing rule** | For known platforms (Amazon, LinkedIn, TikTok, etc.) the skill redirects to `data-feeds` — pre-built scrapers are faster, cheaper, and more reliable than building a new one. |
+
+### Description quality matters
+
+The natural-language description is the only signal the AI Flow has. A strong description names every field, disambiguates location (e.g. "the price near the title, not the recommendations sidebar"), handles missing-field cases, and pins types. The skill's `prompts.md` reference has worked strong-vs-weak examples for product pages, listings, and articles.
+
+### Reference files
+
+- [skills/scraper-studio/SKILL.md](skills/scraper-studio/SKILL.md) — Main skill: `create` and `run` flows, run-mode decision tree, troubleshooting
+- [skills/scraper-studio/references/prompts.md](skills/scraper-studio/references/prompts.md) — How to write descriptions the AI Flow can act on (strong vs weak examples, field-listing patterns)
+- [skills/scraper-studio/references/recipes.md](skills/scraper-studio/references/recipes.md) — End-to-end recipes: create+run, batch over URLs, sync→async fallback, collector recovery
+- [skills/scraper-studio/references/api-flow.md](skills/scraper-studio/references/api-flow.md) — Underlying REST endpoints, status sentinels, and the two recoverable artefacts (`collector_id`, `response_id`)
 
 ---
 
@@ -675,6 +722,12 @@ brightdata-plugin/
 │   │       ├── supported-domains.md   # Pre-built scraper lookup + API
 │   │       ├── site-analysis-guide.md # HTML analysis playbook
 │   │       └── pagination-patterns.md # 7 pagination strategies
+│   ├── scraper-studio/
+│   │   ├── SKILL.md             # bdata scraper create / run workflow
+│   │   └── references/
+│   │       ├── prompts.md       # Writing descriptions for AI generation
+│   │       ├── recipes.md       # End-to-end shell recipes
+│   │       └── api-flow.md      # Underlying REST endpoints and artefacts
 │   ├── brightdata-cli/
 │   │   ├── SKILL.md             # CLI usage guide and command patterns
 │   │   └── references/
@@ -793,6 +846,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Python SDK API Reference](skills/python-sdk-best-practices/references/api-reference.md) - Full API surface, payloads, constants
 - [Scraper Builder](skills/scraper-builder/SKILL.md) - Build scrapers for any site with guided API selection
 - [Supported Domains](skills/scraper-builder/references/supported-domains.md) - 100+ pre-built scrapers lookup
+- [Scraper Studio](skills/scraper-studio/SKILL.md) - AI-generated scrapers via `bdata scraper create` / `bdata scraper run`
+- [Scraper Studio Prompts](skills/scraper-studio/references/prompts.md) - Writing descriptions the AI Flow can act on
+- [Scraper Studio Recipes](skills/scraper-studio/references/recipes.md) - End-to-end shell recipes
+- [Scraper Studio API Flow](skills/scraper-studio/references/api-flow.md) - REST endpoints and recoverable artefacts
 - [Bright Data CLI](skills/brightdata-cli/SKILL.md) - Terminal tool for scraping, search, and data extraction
 - [CLI Commands Reference](skills/brightdata-cli/references/commands.md) - Full command reference with all flags
 - [CLI Pipelines Reference](skills/brightdata-cli/references/pipelines.md) - 40+ platform pipeline types
