@@ -25,31 +25,39 @@ bdata scraper run "$COLLECTOR_ID" https://example.com/product/2 \
 jq 'keys' product-2.json
 ```
 
-## Recipe 2 — fan out one collector over many URLs
+## Recipe 2 — run one collector over many URLs (single batch call)
+
+Pass the URL list to `bdata scraper run` directly via `--input-file` or `--urls`. The CLI POSTs the entire array to `/dca/trigger` in one request — one snapshot, one poll loop, one merged result array. This is the canonical batch shape from the Scraper Studio reference SDKs (`triggerWithUrls` / `trigger_with_urls`).
 
 ```bash
-# Assume you already have a collector_id from a previous create
 COLLECTOR_ID="c_mp3tuab31lswoxvpws"
-mkdir -p out
 
-while IFS= read -r url; do
-    [ -z "$url" ] && continue
-    # Hash the URL so filenames are safe and unique
-    hash=$(printf '%s' "$url" | md5sum | cut -c1-8)
-    echo "[$hash] $url"
-    bdata scraper run "$COLLECTOR_ID" "$url" \
-        --json -o "out/${hash}.json" \
-        || echo "  ! failed: $url" >> out/failures.log
-done < urls.txt
+# One URL per line, # comments and blank lines ignored
+cat > urls.txt <<'EOF'
+https://example.com/p/1
+https://example.com/p/2
+# https://example.com/p/3   ← skipped
+https://example.com/p/4
+EOF
 
-echo "Done. $(ls out/*.json 2>/dev/null | wc -l) results, \
-$(wc -l < out/failures.log 2>/dev/null || echo 0) failures."
+bdata scraper run "$COLLECTOR_ID" --input-file urls.txt \
+    --pretty -o out/results.json
+
+# Or inline, comma-separated
+bdata scraper run "$COLLECTOR_ID" \
+    --urls "https://example.com/p/1,https://example.com/p/2,https://example.com/p/3" \
+    --pretty -o out/results.json
+
+# Or a JSON array — strings, or objects with a "url" field
+echo '["https://example.com/p/1","https://example.com/p/2"]' > urls.json
+bdata scraper run "$COLLECTOR_ID" --input-file urls.json -o out/results.json
 ```
 
 Notes:
-- Default async + poll mode (no `--sync`) is safest for batch.
-- Run sequentially unless you've confirmed your account's concurrent-job limit. Bright Data jobs are server-side; the CLI doesn't parallelize them for you.
-- For very large URL lists (100+), prefer the web UI's bulk input or the `/dca/trigger` batch endpoint directly — see [api-flow.md](api-flow.md).
+- Output is a single JSON array of N records, one per input URL. Aggregate downstream with `jq` if you need per-URL files.
+- The default batch timeout is **3600s** (1h). Raise `--timeout` for very large lists if a poll attempt runs over.
+- `--sync` is **incompatible** with multi-URL input — `/dca/crawl` accepts only one URL. Drop `--sync` for batch.
+- **Do not** wrap `scraper run` in a `for url in ...; do bdata scraper run ... done` shell loop — that's N API calls and N snapshots instead of one. Use the input flags.
 
 ## Recipe 3 — try sync, fall back to async on timeout
 
