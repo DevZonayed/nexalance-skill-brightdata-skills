@@ -33,6 +33,7 @@ Halt and route to setup if either check fails. Both commands require an authenti
 | User describes data they want from a URL, no scraper exists yet | `bdata scraper create <url> "<description>"` → save the `collector_id` |
 | User has a `collector_id` and wants data from a URL | `bdata scraper run <collector_id> <url>` (default async + poll) |
 | Page is small and you want fast feedback (≤ ~50 s) | `bdata scraper run … --sync` |
+| Scraper ran but returned wrong / empty / partial data | inspect the output, then `bdata scraper heal <collector_id> "<what's wrong>"` → re-run to verify |
 | Site is a known platform (Amazon, LinkedIn, TikTok, …) | **stop — use `data-feeds` skill** |
 | You want SERP / discovery, not extraction | **use `search` skill** |
 | You want a one-off raw page fetch | **use `scrape` skill** |
@@ -180,6 +181,52 @@ If the user only sees the notice and a long wait, that is expected — large job
 
 ---
 
+## Action 3 — `scraper heal`
+
+Fix an existing scraper **in place** when it ran but returned wrong, empty, or partial data. The scraper's `collector_id` stays the same — it is improved, not replaced.
+
+```bash
+bdata scraper heal <collector_id> "<what's wrong>" [--url <verify-url>] \
+    [--timeout <seconds>] [--max-retries <n>] [--no-retry] \
+    [--json | --pretty] [-o <path>] [--timing] [-k <api-key>]
+```
+
+**You are the detector.** The CLI never decides on its own that a scraper is broken — you inspect the run output and decide. A heal is slow and billable, so only heal when the data is actually wrong, not just legitimately empty.
+
+The `<prompt>` is required and is the most important input. Name exactly what is wrong and what the correct output should be: *"The price field returns null — the selector moved into a `<span data-testid=...>`. Capture price and currency again."* Vague prompts ("fix it") produce vague heals.
+
+### What happens under the hood
+
+1. **`POST /dca/collectors/{collector_id}/refactor_template`** with `{prompt, custom_input: []}` — triggers the AI self-healing job.
+2. **`GET .../refactor_template/progress`** (polled) — waits for `status: "done"`, same job shape and timing as `automate_template`.
+
+### Output + the verify loop
+
+On success `heal` returns an envelope and, crucially, a `next_step` — a ready-to-run command to verify the fix:
+
+```json
+{
+  "collector_id": "c_mp3tuab31lswoxvpws",
+  "status": "done",
+  "completed_steps": ["plan", "patch"],
+  "prompt": "Price returns null — selector moved …",
+  "view_url": "https://brightdata.com/cp/scrapers/c_mp3tuab31lswoxvpws",
+  "next_step": "bdata scraper run c_mp3tuab31lswoxvpws https://example.com/product/1"
+}
+```
+
+Pass `--url <verify-url>` so `next_step` is concrete. Then run it and re-inspect the data — that closes the self-healing loop:
+
+```
+run → inspect → heal "<what's wrong>" → run again → verify
+```
+
+### Failure is non-destructive
+
+If a heal fails (429 cap exhausted, timeout, terminal `failed`), the existing scraper is **unchanged and still works** as it did before. The CLI says so and prints the `collector_id`. Unlike a failed `create`, nothing half-built is left behind.
+
+---
+
 ## Full create-then-run workflow
 
 Capture the `collector_id` cleanly with `jq`, then chain into `run`:
@@ -221,6 +268,11 @@ For more end-to-end recipes (batch run loops, error recovery, web-UI handoff), s
 7. **Trying to disable the batch auto-fallback.** It has no flag. The fallback is the correct behavior when a URL expands past the realtime page limit. Let it run.
 
 8. **Vague descriptions in `create`.** A description like "scrape the page" produces a generic scraper. Name every field, name conditions ("if there's a sale price, capture both"), name disambiguators ("the price near the title, not in the recommendations sidebar"). See [references/prompts.md](references/prompts.md).
+
+9. **Re-running `create` to fix a broken scraper.** That builds a *new*
+   collector and orphans the old one. To fix an existing scraper, use
+   `bdata scraper heal <collector_id> "<what's wrong>"` — it mutates the
+   scraper in place so your saved `collector_id` keeps working and improves.
 
 ---
 
