@@ -193,7 +193,7 @@ bdata scraper heal <collector_id> "<what's wrong>" [--url <verify-url>] \
 
 **You are the detector.** The CLI never decides on its own that a scraper is broken — you inspect the run output and decide. A heal is slow and billable, so only heal when the data is actually wrong, not just legitimately empty.
 
-The `<prompt>` is required and is the most important input. Name exactly what is wrong and what the correct output should be: *"The price field returns null — the selector moved into a `<span data-testid=...>`. Capture price and currency again."* Vague prompts ("fix it") produce vague heals.
+The `<prompt>` is required and is the most important input. Name exactly what is wrong and what the correct output should be: *"The price field returns null — the selector moved into a `<span data-testid=...>`. Capture price and currency again."* Vague prompts ("fix it") produce vague heals. The prompt is capped at 1000 characters.
 
 ### What happens under the hood
 
