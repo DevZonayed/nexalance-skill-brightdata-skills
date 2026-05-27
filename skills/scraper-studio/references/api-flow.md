@@ -173,6 +173,21 @@ Returns the same job-progress shape as `automate_template/progress`
 timeout, or a terminal `failed` / `error` / `cancelled`. Default poll timeout
 600 s (`--timeout`).
 
+### 3. Approval gate + resume
+
+The self-healing flow pauses at `status: "pending_answer"` / `step:
+"user_approval"`, returning `diff` (before/after templates) and
+`preview_result` (sample output). It does **not** auto-advance. To commit (or
+discard) the fix:
+
+```
+POST /dca/collectors/{collector_id}/resume_automation_job
+{ "message": true }     // true = approve, false = reject
+```
+
+After resuming, `refactor_template/progress` continues to `done`. `scraper
+approve` wraps this; `scraper heal --auto-approve` calls it automatically.
+
 **Recoverability:** if the heal fails, the collector is unchanged and still
 works — nothing is left half-built (unlike a failed `create`).
 
