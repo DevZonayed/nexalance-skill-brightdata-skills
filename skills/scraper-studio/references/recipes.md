@@ -124,3 +124,32 @@ bdata scraper run "$COLLECTOR_ID" https://example.com/page \
 ```
 
 `--name` tags the run so you can find it later in the dashboard's run history.
+
+## Recipe 7 — self-healing loop (run → inspect → heal → re-run)
+
+The agent is the detector: run, inspect the data, and only heal if it is
+actually wrong.
+
+```bash
+COLLECTOR_ID="c_mp3tuab31lswoxvpws"
+URL="https://example.com/product/1"
+
+# 1. Run and capture the data
+bdata scraper run "$COLLECTOR_ID" "$URL" --json -o out.json
+
+# 2. Inspect. If (and only if) the data is wrong — e.g. price is null when the
+#    page clearly shows a price — heal with a SPECIFIC prompt:
+if [ "$(jq -r '.price // "null"' out.json)" = "null" ]; then
+    bdata scraper heal "$COLLECTOR_ID" \
+        "The price field returns null — the selector moved into a span with \
+         data-testid. Capture price and currency again." \
+        --url "$URL" --pretty -o heal.json
+
+    # 3. heal.json.next_step is a ready-to-run verify command:
+    eval "$(jq -r '.next_step' heal.json) --json -o out.json"
+    jq '{price, currency}' out.json   # 4. verify the fix
+fi
+```
+
+Do **not** re-run `bdata scraper create` to fix a scraper — that orphans a new
+collector. `heal` fixes the existing one in place.
