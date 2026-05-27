@@ -33,7 +33,7 @@ Halt and route to setup if either check fails. Both commands require an authenti
 | User describes data they want from a URL, no scraper exists yet | `bdata scraper create <url> "<description>"` → save the `collector_id` |
 | User has a `collector_id` and wants data from a URL | `bdata scraper run <collector_id> <url>` (default async + poll) |
 | Page is small and you want fast feedback (≤ ~50 s) | `bdata scraper run … --sync` |
-| Scraper ran but returned wrong / empty / partial data | inspect the output, then `bdata scraper heal <collector_id> "<what's wrong>"` → re-run to verify |
+| Scraper ran but returned wrong / empty / partial data | inspect the output, then `bdata scraper heal <collector_id> "<what's wrong>"` → review preview → approve → re-run to verify |
 | Site is a known platform (Amazon, LinkedIn, TikTok, …) | **stop — use `data-feeds` skill** |
 | You want SERP / discovery, not extraction | **use `search` skill** |
 | You want a one-off raw page fetch | **use `scrape` skill** |
@@ -202,28 +202,69 @@ The `<prompt>` is required and is the most important input. Name exactly what is
 
 ### Output + the verify loop
 
-On success `heal` returns an envelope and, crucially, a `next_step` — a ready-to-run command to verify the fix:
+`heal` (without `--auto-approve`) usually ends at an **approval gate** rather
+than completing immediately. The response carries `status: "awaiting_approval"`
+with two key fields:
+
+- `preview_result` — sample rows the fixed scraper would produce, so you can
+  judge whether the fix is correct before committing it.
+- `diff_summary` — a summary of what changed in the template.
+- `next_step` — points at `bdata scraper approve <collector_id>` to commit
+  (or `--reject` to discard).
 
 ```json
 {
   "collector_id": "c_mp3tuab31lswoxvpws",
-  "status": "done",
-  "completed_steps": ["plan", "patch"],
-  "prompt": "Price returns null — selector moved …",
-  "view_url": "https://brightdata.com/cp/scrapers/c_mp3tuab31lswoxvpws",
-  "next_step": "bdata scraper run c_mp3tuab31lswoxvpws https://example.com/product/1"
+  "status": "awaiting_approval",
+  "preview_result": [{"price": "29.99", "currency": "USD"}],
+  "diff_summary": "Updated price selector from .price to span[data-testid='price']",
+  "next_step": "bdata scraper approve c_mp3tuab31lswoxvpws"
 }
 ```
 
-Pass `--url <verify-url>` so `next_step` is concrete. Then run it and re-inspect the data — that closes the self-healing loop:
+Review `preview_result`, then run `bdata scraper approve <collector_id>` to
+commit the fix — or pass `--reject` to discard it and re-heal with a sharper
+prompt. `approve` polls to `done` and hands back a `next_step` =
+`bdata scraper run <id> <url>` to verify.
+
+Pass `--url <verify-url>` to `heal` so the approve and run steps are concrete.
+The full self-healing loop is now:
 
 ```
-run → inspect → heal "<what's wrong>" → run again → verify
+run → inspect → heal → review preview → approve → run → verify
 ```
+
+To skip the gate entirely, use `heal --auto-approve` — it approves automatically
+and polls through to `done`.
 
 ### Failure is non-destructive
 
 If a heal fails (429 cap exhausted, timeout, terminal `failed`), the existing scraper is **unchanged and still works** as it did before. The CLI says so and prints the `collector_id`. Unlike a failed `create`, nothing half-built is left behind.
+
+---
+
+## Action 4 — `scraper approve`
+
+A `scraper heal` (without `--auto-approve`) stops at an approval gate:
+`status: "awaiting_approval"`, with `preview_result` (sample rows the fixed
+scraper would produce) and a `diff_summary`. Review the preview, then commit
+the fix:
+
+```bash
+bdata scraper approve <collector_id> [--reject] [--url <verify-url>] \
+    [--timeout <seconds>] [--json | --pretty] [-o <path>] [-k <api-key>]
+```
+
+- Approves by default (`POST /dca/collectors/{id}/resume_automation_job
+  {"message": true}`), then polls to `done` and hands back a
+  `next_step` = `bdata scraper run <id> <url>` to verify.
+- `--reject` sends `{"message": false}` to discard the proposed fix; re-heal
+  with a sharper prompt to try again.
+- If a heal needs multiple approvals, `approve` may stop at
+  `awaiting_approval` again — just run it again.
+
+`awaiting_approval` is **not** a failure — it means the fix is ready and
+waiting for your decision.
 
 ---
 
@@ -273,6 +314,11 @@ For more end-to-end recipes (batch run loops, error recovery, web-UI handoff), s
    collector and orphans the old one. To fix an existing scraper, use
    `bdata scraper heal <collector_id> "<what's wrong>"` — it mutates the
    scraper in place so your saved `collector_id` keeps working and improves.
+
+10. **Treating `awaiting_approval` as a failure.** It is the normal end state
+    of a heal — the fix is computed and waiting for your decision. Review
+    `preview_result`, then `bdata scraper approve <id>` (or `--reject`). Use
+    `heal --auto-approve` to skip the gate.
 
 ---
 
