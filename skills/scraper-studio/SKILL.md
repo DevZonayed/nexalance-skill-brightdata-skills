@@ -1,6 +1,6 @@
 ---
 name: scraper-studio
-description: "Build and run AI-generated Bright Data scrapers from the terminal via `bdata scraper create` and `bdata scraper run`. Use this skill whenever the user wants to generate a scraper from a natural-language description, build a custom scraper without writing code, turn a URL + plain-English description into a reusable scraper, or run an existing Bright Data collector against a URL and get the data back. Triggers on phrases like 'build me a scraper for', 'create a scraper that extracts', 'generate a scraper from a description', 'turn this URL into a scraper', 'run this scraper on', 'run my collector', 'scraper studio', `scraper create`, `scraper run`, `collector_id`, `automate_template`, or `/dca/`. Covers the AI flow (template create → trigger AI generation → poll progress), the run flow (async + poll by default, `--sync` for fast pages), and the silent auto-fallback to the batch endpoint when a URL expands past the realtime page limit. Requires the Bright Data CLI."
+description: "Build and run AI-generated Bright Data scrapers from the terminal via `bdata scraper create` and `bdata scraper run`. Use this skill whenever the user wants to generate a scraper from a natural-language description, build a custom scraper without writing code, turn a URL + plain-English description into a reusable scraper, run an existing Bright Data collector against a URL, or batch-scrape a list of URLs through one collector. Triggers on phrases like 'build me a scraper for', 'create a scraper that extracts', 'generate a scraper from a description', 'turn this URL into a scraper', 'run this scraper on', 'run my collector', 'batch scrape', 'scrape these URLs', 'scrape a list of URLs', 'competitive pricing table', 'scraper studio', `scraper create`, `scraper run`, `--urls`, `--input-file`, `collector_id`, `automate_template`, or `/dca/`. Covers the AI flow (template create → trigger AI generation → poll progress), the single-URL run flow (async + poll by default, `--sync` for fast pages), the multi-URL batch flow (`--urls` / `--input-file` → one `/dca/trigger` call with array body), and the silent auto-fallback to the batch endpoint when a URL expands past the realtime page limit. Requires the Bright Data CLI."
 ---
 
 # Bright Data — Scraper Studio
@@ -31,8 +31,9 @@ Halt and route to setup if either check fails. Both commands require an authenti
 | Situation | Action |
 |---|---|
 | User describes data they want from a URL, no scraper exists yet | `bdata scraper create <url> "<description>"` → save the `collector_id` |
-| User has a `collector_id` and wants data from a URL | `bdata scraper run <collector_id> <url>` (default async + poll) |
-| Page is small and you want fast feedback (≤ ~50 s) | `bdata scraper run … --sync` |
+| User has a `collector_id` and wants data from one URL | `bdata scraper run <collector_id> <url>` (default async + poll) |
+| User has a `collector_id` and wants data from many URLs | `bdata scraper run <collector_id> --urls "u1,u2,..."` or `--input-file urls.txt` (single batch call) |
+| Page is small and you want fast feedback (≤ ~50 s, single URL) | `bdata scraper run … --sync` |
 | Scraper ran but returned wrong / empty / partial data | inspect the output, then `bdata scraper heal <collector_id> "<what's wrong>"` → review preview → approve → re-run to verify |
 | Site is a known platform (Amazon, LinkedIn, TikTok, …) | **stop — use `data-feeds` skill** |
 | You want SERP / discovery, not extraction | **use `search` skill** |
@@ -104,13 +105,19 @@ The CLI sets a stub webhook (`https://example.com/webhook`). This satisfies the 
 
 ## Action 2 — `scraper run`
 
-Execute a scraper against a URL.
+Execute a scraper against one or more URLs.
 
 ```bash
-bdata scraper run <collector_id> <url> [--sync [--sync-timeout 25-50]] \
+bdata scraper run <collector_id> [url] \
+    [--urls "u1,u2,..." | --input-file <path>] \
+    [--sync [--sync-timeout 25-50]] \
     [--timeout <seconds>] [--name <name>] [--version <version>] \
     [--json | --pretty] [-o <path>] [--timing] [-k <api-key>]
 ```
+
+**Pick exactly one input source:** positional `<url>`, `--urls`, or `--input-file`. Combining them errors with `only one input source`.
+
+Multi-URL routes through `/dca/trigger` as a single API call with an array body — the canonical pattern from the [Scraper Studio Node](https://github.com/brightdata/bright-data-scraper-studio-nodejs-project) and [Python](https://github.com/brightdata/bright-data-scraper-studio-python-project) reference projects (`triggerWithUrls` / `trigger_with_urls`). One snapshot, one poll loop, one merged result array. **Do not hand-roll a `for url in $(cat urls.txt); do bdata scraper run ...` loop** — that's N API calls for what should be one.
 
 ### Choosing the run mode
 
@@ -135,8 +142,9 @@ bdata scraper run <collector_id> <url> [--sync [--sync-timeout 25-50]] \
 
 | Mode | Endpoint | When to use |
 |---|---|---|
-| **Default (async + poll)** | `/dca/trigger_immediate` → poll `/dca/get_result` | Anything you expect to take more than ~50 s, anything paginated, anything you're not sure about. This is the safe default. |
-| **`--sync`** | `/dca/crawl` | Single-page extractions you expect to complete in under 50 s. Faster path: one request, no polling. |
+| **Default (single URL, async + poll)** | `/dca/trigger_immediate` → poll `/dca/get_result` | Anything you expect to take more than ~50 s, anything paginated, anything you're not sure about. This is the safe default for one URL. |
+| **`--sync` (single URL)** | `/dca/crawl` | Single-page extractions you expect to complete in under 50 s. Faster path: one request, no polling. **Incompatible with multi-URL** — `/dca/crawl` accepts only one URL. |
+| **Multi-URL (`--urls` / `--input-file`)** | `/dca/trigger` (array body) → poll `/dca/dataset` | 2+ URLs through the same collector. One API call, one snapshot ID, one merged result array. Use the longer `--timeout` (default 3600s) for big batches. |
 
 ```bash
 # Default — async + poll (recommended for most cases)
@@ -152,6 +160,18 @@ bdata scraper run c_mp3tuab31lswoxvpws https://example.com/p/1 --sync
 # Sync with a tighter server timeout
 bdata scraper run c_mp3tuab31lswoxvpws https://example.com/p/1 \
     --sync --sync-timeout 30
+
+# Multi-URL via comma-separated list — one batch call
+bdata scraper run c_mp3tuab31lswoxvpws \
+    --urls "https://example.com/p/1,https://example.com/p/2,https://example.com/p/3" \
+    --pretty -o products.json
+
+# Multi-URL via file (one URL per line; # comments and blanks ignored)
+bdata scraper run c_mp3tuab31lswoxvpws --input-file urls.txt -o products.json
+
+# Multi-URL via JSON array
+echo '["https://example.com/p/1","https://example.com/p/2"]' > urls.json
+bdata scraper run c_mp3tuab31lswoxvpws --input-file urls.json
 ```
 
 ### `--sync-timeout` is bounded to 25–50
@@ -270,7 +290,7 @@ waiting for your decision.
 
 ## Full create-then-run workflow
 
-Capture the `collector_id` cleanly with `jq`, then chain into `run`:
+Capture the `collector_id` cleanly with `jq`, then chain into `run` with the multi-URL batch path:
 
 ```bash
 # 1. Create the scraper, save the AI output, extract the collector_id
@@ -282,13 +302,14 @@ bdata scraper create https://example.com/product/1 \
 COLLECTOR_ID=$(jq -r '.collector_id // .id' create.json)
 echo "Built: $COLLECTOR_ID"
 
-# 3. Run it on each URL you want extracted
-for url in $(cat urls.txt); do
-    bdata scraper run "$COLLECTOR_ID" "$url" --json -o "out/${url//[\/:.]/_}.json"
-done
+# 3. Run it on every URL in one batch — single API call, merged result array
+bdata scraper run "$COLLECTOR_ID" --input-file urls.txt \
+    --pretty -o out/results.json
 ```
 
-For more end-to-end recipes (batch run loops, error recovery, web-UI handoff), see [references/recipes.md](references/recipes.md).
+**Do not** wrap `bdata scraper run` in a `for url in $(cat urls.txt); do ... done` loop — that's N API calls and N snapshots. Use `--input-file urls.txt` (or `--urls "..."`) instead; the CLI POSTs all of them to `/dca/trigger` in a single array body and returns one merged result array.
+
+For more end-to-end recipes (batch input file shapes, error recovery, web-UI handoff), see [references/recipes.md](references/recipes.md).
 
 ---
 
@@ -308,14 +329,16 @@ For more end-to-end recipes (batch run loops, error recovery, web-UI handoff), s
 
 7. **Trying to disable the batch auto-fallback.** It has no flag. The fallback is the correct behavior when a URL expands past the realtime page limit. Let it run.
 
-8. **Vague descriptions in `create`.** A description like "scrape the page" produces a generic scraper. Name every field, name conditions ("if there's a sale price, capture both"), name disambiguators ("the price near the title, not in the recommendations sidebar"). See [references/prompts.md](references/prompts.md).
+8. **Hand-rolling a `for url in $(cat urls.txt); do bdata scraper run ...` loop.** That's N API calls, N snapshot IDs, and N poll loops for what the API natively treats as one batch. Use `--input-file urls.txt` or `--urls "u1,u2,..."` — the CLI posts the whole array to `/dca/trigger` in a single request and returns one merged result array. This mirrors the canonical `triggerWithUrls` / `trigger_with_urls` helpers from the Scraper Studio reference SDKs.
 
-9. **Re-running `create` to fix a broken scraper.** That builds a *new*
+9. **Vague descriptions in `create`.** A description like "scrape the page" produces a generic scraper. Name every field, name conditions ("if there's a sale price, capture both"), name disambiguators ("the price near the title, not in the recommendations sidebar"). See [references/prompts.md](references/prompts.md).
+
+10. **Re-running `create` to fix a broken scraper.** That builds a *new*
    collector and orphans the old one. To fix an existing scraper, use
    `bdata scraper heal <collector_id> "<what's wrong>"` — it mutates the
    scraper in place so your saved `collector_id` keeps working and improves.
 
-10. **Treating `awaiting_approval` as a failure.** It is the normal end state
+11. **Treating `awaiting_approval` as a failure.** It is the normal end state
     of a heal — the fix is computed and waiting for your decision. Review
     `preview_result`, then `bdata scraper approve <id>` (or `--reject`). Use
     `heal --auto-approve` to skip the gate.
