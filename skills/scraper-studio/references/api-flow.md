@@ -108,9 +108,12 @@ Outcomes:
 - **202 + `{"error":"crawl_results_timeout","response_id":"r_late_..."}`** → server-side timeout. CLI prints the `response_id` and tells the user to **re-run without `--sync`**. The same request can be picked up async by polling `/dca/get_result?response_id=...` (which is what `bdata scraper run <collector_id> <url>` will do under the hood — though it triggers a new request, so for true reuse of the existing `response_id` you'd call `get_result` directly).
 - Other non-200 → surfaced as an error.
 
-### Path C — auto-fallback to batch
+### Path C — batch (`/dca/trigger`)
 
-Triggered when path A or B returns a body that contains the marker `realtime job limit` (case-insensitive). Typically looks like:
+The CLI takes this path in two situations:
+
+1. **Explicit multi-URL** — caller passes `--urls "u1,u2,..."` or `--input-file <path>` with 2+ URLs. The CLI skips paths A/B entirely and goes straight to `/dca/trigger` with an array body. This mirrors the canonical [`triggerWithUrls`](https://github.com/brightdata/bright-data-scraper-studio-nodejs-project) / [`trigger_with_urls`](https://github.com/brightdata/bright-data-scraper-studio-python-project) helpers from the Scraper Studio reference SDKs.
+2. **Auto-fallback from A or B** — single-URL path returned a body containing the marker `realtime job limit` (case-insensitive). Typically:
 
 ```json
 [{
@@ -119,12 +122,14 @@ Triggered when path A or B returns a body that contains the marker `realtime job
 }]
 ```
 
-The CLI then makes:
+In both cases the CLI then makes a single call:
 
 ```
 POST /dca/trigger?collector={collector_id}&name=...&version=...
 [
-  { "url": "https://example.com/listing" }   // body is an array
+  { "url": "https://example.com/p/1" },
+  { "url": "https://example.com/p/2" },
+  ...
 ]
 ```
 
