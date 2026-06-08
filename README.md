@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://brightdata.com"><img src="https://img.shields.io/badge/Powered%20by-Bright%20Data-3D7FFC?style=for-the-badge" alt="Powered by Bright Data"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License"></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/Skills-17-9D97F4?style=for-the-badge" alt="17 Skills"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/Skills-21-9D97F4?style=for-the-badge" alt="21 Skills"></a>
   <a href="#data-feeds-skill"><img src="https://img.shields.io/badge/Datasets-40+-15C1E6?style=for-the-badge" alt="40+ Datasets"></a>
   <a href="#bright-data-mcp-skill"><img src="https://img.shields.io/badge/MCP_Tools-60+-FF6B35?style=for-the-badge" alt="60+ MCP Tools"></a>
 </p>
@@ -29,6 +29,10 @@
   <a href="#proxy-skill">Proxy</a> •
   <a href="#best-practices-skill">Best Practices</a> •
   <a href="#python-sdk-best-practices-skill">Python SDK</a> •
+  <a href="#javascript-sdk-best-practices-skill">JavaScript SDK</a> •
+  <a href="#discover-api-skill">Discover API</a> •
+  <a href="#live-research-skill">Live Research</a> •
+  <a href="#rag-pipeline-skill">RAG Pipeline</a> •
   <a href="#-setup">Setup</a> •
   <a href="#-examples">Examples</a>
 </p>
@@ -48,6 +52,10 @@ This plugin brings **Bright Data's powerful web infrastructure** directly into C
 - **Write correct Bright Data code** — built-in best practices for Web Unlocker, SERP API, Web Scraper API, and Browser API
 - **Route requests through proxies** — generate working code for Datacenter, ISP, Residential, and Mobile proxy networks, with the right network, IP pool type, targeting, and SSL setup
 - **Build with the Python SDK** — comprehensive guide for the `brightdata-sdk` package with patterns for async/sync clients, platform scrapers, SERP, datasets, and more
+- **Build with the JavaScript/TypeScript SDK** — comprehensive guide for the `@brightdata/sdk` package (`bdclient`) with patterns for web unlocker, platform scrapers, SERP, discover, datasets, browser automation, and Scraper Studio
+- **Run the Discover API** — intent-ranked, AI-relevance-scored semantic web search with parsed page content, across REST/CLI/SDK (the foundation for research and RAG)
+- **Produce live research briefs** — decompose a question into multi-angle Discover queries, dedup and rank by relevance, and synthesize a cited report from live web data
+- **Build RAG / search-engine pipelines** — use Discover as the retrieval layer for an LLM, via live web-grounded retrieval or vector-store ingestion
 
 Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlocker), [SERP API](https://brightdata.com/products/serp-api), and [Web Data APIs](https://brightdata.com/products/web-scraper), this plugin handles the complexity of web access so your AI agents can focus on what matters.
 
@@ -67,6 +75,10 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 | **`bright-data-best-practices`** | Built-in reference for Web Unlocker, SERP API, Web Scraper API, and Browser API — Claude consults this automatically when writing Bright Data code |
 | **`brightdata-proxy`** | Generate working code to route requests through Bright Data's Datacenter, ISP, Residential, and Mobile proxy networks — network and IP-pool selection, username targeting/session params, SSL CA setup, and integrations for cURL, Python (requests/httpx/aiohttp/Scrapy), Node (fetch/axios), Playwright, Puppeteer, and Selenium |
 | **`python-sdk-best-practices`** | Comprehensive guide for the `brightdata-sdk` Python package — async/sync clients, platform scrapers, SERP, datasets, Scraper Studio, Browser API, error handling, and common patterns |
+| **`js-sdk-best-practices`** | Comprehensive guide for the `@brightdata/sdk` JavaScript/TypeScript package (`bdclient`, Node ≥20, ESM+CJS) — web unlocker, 11 platform scrapers, SERP, Discover, datasets, Browser API, Scraper Studio, error classes, and batch/trigger orchestration |
+| **`discover-api`** | Use the Discover API — intent-ranked, AI-relevance-scored semantic web search with parsed page content. Covers REST (`POST`/`GET /discover`), CLI (`bdata discover`), the SDKs (`client.discover`), the standard/zeroRanking/deep/fast modes, and the trigger→poll flow. Foundation for `live-research` and `rag-pipeline` |
+| **`live-research`** | Produce a deep, multi-source, cited research brief — decompose a question into multiple intent-ranked Discover queries, pull page content, dedup and rank by relevance, then synthesize a structured report with inline citations |
+| **`rag-pipeline`** | Build a RAG pipeline or custom search engine on top of Discover — live web-grounded retrieval for an LLM, or ingestion into a vector store (discover → chunk → embed → retrieve). Provider-agnostic JS + Python code |
 | **`brightdata-cli`** | Guide for using the Bright Data CLI (`brightdata` / `bdata`) to scrape, search, extract structured data from 40+ platforms, manage proxy zones, and check account budget — all from the terminal |
 | **`competitive-intel`** | Real-time competitive intelligence using live web data — competitor snapshots, pricing comparison, review mining, hiring signal analysis, content & SEO battles, and market landscape mapping. Replaces $15K+/yr enterprise CI tools at pennies per analysis |
 | **`brand-listening`** | Social listening and brand reputation research — collects what people are saying about a brand across Reddit, X, Instagram, TikTok, YouTube, news, and review sites, then classifies sentiment, clusters themes, and delivers a cited digest with recommendations. Triggers on "what are people saying about us", "monitor mentions", "brand sentiment" |
@@ -532,6 +544,100 @@ The `python-sdk-best-practices` skill is a comprehensive guide for writing corre
 
 ---
 
+## JavaScript SDK Best Practices Skill
+
+The `js-sdk-best-practices` skill is a comprehensive guide for writing correct code with the `@brightdata/sdk` JavaScript/TypeScript package. Claude consults this automatically when writing, modifying, or reviewing Node.js/TypeScript code that uses the Bright Data SDK.
+
+### What it covers
+
+| Topic | Details |
+|-------|---------|
+| **Client setup** | `bdclient` (single async client, Node ≥20, ESM+CJS, TS types), `BRIGHTDATA_API_TOKEN`, `await using` / `close()` lifecycle |
+| **Web Unlocker** | `client.scrapeUrl(url \| url[], { format, dataFormat, country })` — html/markdown/json/screenshot |
+| **Platform scrapers** | 11 platforms (Amazon, LinkedIn, Instagram, Facebook, TikTok, YouTube, Reddit, Pinterest, ChatGPT, Perplexity, DigiKey) — `collect*` / orchestrated / `discover*` method triad |
+| **SERP API** | `client.search.google/bing/yandex` (SERP-only — no platform search router in JS) |
+| **Discover** | `client.discover(query, { intent })` and `discoverTrigger` for AI-ranked entity/page discovery |
+| **Datasets API** | `query → getStatus → download` snapshot lifecycle, camelCase dataset names |
+| **Browser API** | `client.browser.getConnectUrl()` CDP URLs for Playwright/Puppeteer/Selenium |
+| **Scraper Studio** | `client.scraperStudio.run/trigger/status` for custom collectors |
+| **Error handling** | `BRDError` hierarchy (`ValidationError`, `AuthenticationError`, …) |
+| **Batch operations** | array inputs and the `*Trigger` + `job.wait()` pattern (not `Promise.all` of blocking calls) |
+| **Key differences from Python** | `bdclient` vs `BrightDataClient`, camelCase, SERP-only `search`, no platform search router |
+
+### Reference files
+
+- [skills/js-sdk-best-practices/SKILL.md](skills/js-sdk-best-practices/SKILL.md) — Core patterns, service selection, and best practices
+- [skills/js-sdk-best-practices/references/scrapers.md](skills/js-sdk-best-practices/references/scrapers.md) — Web Unlocker options + verified per-platform method tables
+- [skills/js-sdk-best-practices/references/search.md](skills/js-sdk-best-practices/references/search.md) — SERP engines and the Discover API
+- [skills/js-sdk-best-practices/references/datasets-overview.md](skills/js-sdk-best-practices/references/datasets-overview.md) — dataset names and the snapshot lifecycle
+- [skills/js-sdk-best-practices/references/advanced.md](skills/js-sdk-best-practices/references/advanced.md) — constructor options, batch/trigger, Browser API, Scraper Studio, errors, zones
+
+---
+
+## Discover API Skill
+
+The `discover-api` skill is the foundation for intent-ranked semantic web search with Bright Data's Discover API. It's the building block the `live-research` and `rag-pipeline` skills sit on top of.
+
+### What it covers
+
+| Topic | Details |
+|-------|---------|
+| **Trigger → poll** | Async flow: `POST /discover` → `task_id` → `GET ?task_id=` until `status: "done"` |
+| **Surfaces** | REST (`curl`), CLI (`bdata discover`), JS SDK & Python SDK (`client.discover`) — with a per-surface parameter matrix |
+| **Parameters** | `query`, `intent`, `num_results` (1–20), `filter_keywords`, `include_content`, `country`/`city`/`language`, date bounds, `format` |
+| **Modes** | `standard` (default), `deep` (exhaustive), `fast` (low latency), `zeroRanking` (max raw volume) — and which are REST-only |
+| **Result shape** | `{ link, title, description, relevance_score, content? }`; relevance-ranked |
+| **Verification** | poll-before-read, block-page filtering, relevance sanity, error codes (401/403/404/429) |
+
+### Reference files
+
+- [skills/discover-api/SKILL.md](skills/discover-api/SKILL.md) — surfaces, modes, params, trigger/poll, verification
+- [skills/discover-api/references/api-reference.md](skills/discover-api/references/api-reference.md) — full REST spec, per-surface param matrix, errors, limits
+
+---
+
+## Live Research Skill
+
+The `live-research` skill turns one question into a **cited, synthesized brief** by fanning out intent-ranked Discover queries, reading the best sources, and writing findings with inline citations.
+
+### What it covers
+
+| Topic | Details |
+|-------|---------|
+| **Decomposition** | Break a topic into 4–8 angles, each its own Discover call with a tailored `intent` (coverage via breadth, since `num_results` caps at 20) |
+| **Retrieval** | Parallel `discover --include-content`; `deep` mode via REST for hard topics |
+| **Merge & rank** | Dedup by normalized URL, sort by `relevance_score`, drop block-page content |
+| **Synthesis** | Structured brief with inline `[n]` citations, contradictions surfaced, gaps named |
+| **Quality bar** | Cite everything, prefer primary sources, never answer from training data |
+
+### Reference files
+
+- [skills/live-research/SKILL.md](skills/live-research/SKILL.md) — the 7-step method and quality bar
+- [skills/live-research/references/brief-template.md](skills/live-research/references/brief-template.md) — output structure and citation rules
+
+---
+
+## RAG Pipeline Skill
+
+The `rag-pipeline` skill builds a retrieval-augmented-generation pipeline or a custom search engine using Discover as the retrieval layer for an LLM.
+
+### What it covers
+
+| Topic | Details |
+|-------|---------|
+| **Two architectures** | Live retrieval (Discover at query time, always fresh) vs. ingestion (Discover → chunk → embed → vector store) |
+| **Live retrieval** | Over-fetch by `relevance_score`, filter block pages, assemble a cited prompt |
+| **Ingestion** | Dedup → chunk (overlap, paragraph-aware) → embed → upsert with source provenance |
+| **Bulk corpus** | REST `zeroRanking` for max volume, then fetch content separately |
+| **Design rules** | Store provenance, validate `content` before embedding, re-ingest for freshness, keep embedder/vector store pluggable |
+
+### Reference files
+
+- [skills/rag-pipeline/SKILL.md](skills/rag-pipeline/SKILL.md) — architecture choice, design rules, verification
+- [skills/rag-pipeline/references/code.md](skills/rag-pipeline/references/code.md) — runnable JS + Python for live retrieval and ingestion
+
+---
+
 ## Setup
 
 ### Prerequisites
@@ -769,6 +875,25 @@ brightdata-plugin/
 │   │   ├── SKILL.md             # Python SDK patterns and best practices
 │   │   └── references/
 │   │       └── api-reference.md # Full API surface, payloads, constants
+│   ├── js-sdk-best-practices/
+│   │   ├── SKILL.md             # JavaScript/TypeScript SDK (@brightdata/sdk) patterns
+│   │   └── references/
+│   │       ├── scrapers.md      # Web Unlocker + per-platform method tables
+│   │       ├── search.md        # SERP engines and Discover API
+│   │       ├── datasets-overview.md  # Dataset names and snapshot lifecycle
+│   │       └── advanced.md      # Config, batch/trigger, Browser API, Scraper Studio, errors
+│   ├── discover-api/
+│   │   ├── SKILL.md             # Discover API — surfaces, modes, trigger/poll
+│   │   └── references/
+│   │       └── api-reference.md # REST spec, per-surface param matrix, errors, limits
+│   ├── live-research/
+│   │   ├── SKILL.md             # Multi-query Discover → dedup → cited brief
+│   │   └── references/
+│   │       └── brief-template.md  # Output structure and citation rules
+│   ├── rag-pipeline/
+│   │   ├── SKILL.md             # RAG architectures on Discover (live + ingestion)
+│   │   └── references/
+│   │       └── code.md          # Runnable JS + Python pipelines
 │   ├── proxy/
 │   │   ├── SKILL.md             # Proxy networks, pool types, targeting, SSL, code patterns
 │   │   ├── references/
@@ -906,6 +1031,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Browser API Best Practices](skills/bright-data-best-practices/references/browser-api.md) - CDP functions, geo, bandwidth
 - [Python SDK Best Practices](skills/python-sdk-best-practices/SKILL.md) - Async/sync clients, scrapers, SERP, datasets
 - [Python SDK API Reference](skills/python-sdk-best-practices/references/api-reference.md) - Full API surface, payloads, constants
+- [JavaScript SDK Best Practices](skills/js-sdk-best-practices/SKILL.md) - `bdclient`, web unlocker, platform scrapers, SERP, Discover, datasets
+- [JavaScript SDK Scrapers Reference](skills/js-sdk-best-practices/references/scrapers.md) - Per-platform verified method tables
+- [Discover API](skills/discover-api/SKILL.md) - Intent-ranked semantic web search (REST/CLI/SDK, modes, trigger/poll)
+- [Live Research](skills/live-research/SKILL.md) - Multi-source cited research briefs on top of Discover
+- [RAG Pipeline](skills/rag-pipeline/SKILL.md) - Web-grounded retrieval and vector ingestion for LLMs
 - [Scraper Builder](skills/scraper-builder/SKILL.md) - Build scrapers for any site with guided API selection
 - [Supported Domains](skills/scraper-builder/references/supported-domains.md) - 100+ pre-built scrapers lookup
 - [Scraper Studio](skills/scraper-studio/SKILL.md) - AI-generated scrapers via `bdata scraper create` / `bdata scraper run`
