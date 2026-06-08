@@ -42,16 +42,36 @@ Use SERP when the user wants **web pages / links / rankings**, not entities.
 
 ## Discover — `client.discover(query, options?)`
 
-AI-powered discovery with intent-based relevance ranking. Returns
-`Promise<object[]>` where each item is roughly `{ link, title, description, relevance_score }`.
+AI-powered discovery with intent-based relevance ranking, across 31 languages.
+Wraps Bright Data's REST Discover API (`POST https://api.brightdata.com/discover`
+→ `task_id` → `GET ?task_id=...`); the SDK handles the trigger/poll for you.
+Returns `Promise<object[]>` where each item is `{ link, title, description, relevance_score, content? }`
+(`relevance_score` is snake_case in the payload; `content` only when `includeContent: true`).
 
-| Option | Type | Notes |
-|---|---|---|
-| `intent` | string | natural-language description of what you want — **strongly recommended**; ranks results semantically |
-| `filterKeywords` | `string[]` | keep only results matching these keywords |
-| `country` | string | two-letter code |
-| `numResults` | number | how many to return |
-| `includeContent` | boolean | include full page content per result (slower, larger) |
+**Verified against the SDK schema** (`src/schemas/discover.ts`) — these are the
+exact options the JS client accepts:
+
+| Option | Type | Default | Notes |
+|---|---|---|---|
+| `intent` | string | — | natural-language goal — **strongly recommended**; ranks results semantically. REST max 3000 chars |
+| `filterKeywords` | `string[]` | — | exact keywords that must appear (applies `intext:` operators) |
+| `numResults` | integer | — | how many to return; REST range **1–20** |
+| `includeContent` | boolean | `false` | include parsed page/PDF content per result (slower, larger) |
+| `country` | string | — | two-letter code (lowercased, exactly 2 chars) |
+| `city` | string | — | city-level geo-targeting |
+| `language` | string | — | one of 31 supported languages (e.g. `'en'`) |
+| `format` | `'json'` | `'json'` | SDK accepts **only `'json'`** (the raw REST API also supports `'md'`) |
+| `timeout` | number (ms) | `60000` | overall poll timeout |
+| `pollInterval` | number (ms) | `2000` | how often the SDK polls for completion |
+
+`query` must be non-empty (REST max 1500 chars).
+
+> **SDK vs raw REST:** the REST endpoint also supports `mode`
+> (`standard`/`zeroRanking`/`deep`/`fast`), `include_images`, `start_date`/`end_date`,
+> and `remove_duplicates` — **the JS SDK does not expose these**. If you need them,
+> call the REST API directly (`POST https://api.brightdata.com/discover` with
+> `Authorization: Bearer <token>`), then poll `GET ?task_id=<id>` until
+> `status: "done"` (intermediate status is `"processing"`).
 
 ```javascript
 // basic
@@ -72,6 +92,15 @@ const c = await client.discover('sustainable fashion brands', {
 
 // include full page content
 const d = await client.discover('node.js streams tutorial', { includeContent: true, numResults: 3 });
+
+// geo + language targeting, with a longer poll budget
+const e = await client.discover('mejores restaurantes', {
+  intent: 'restaurantes con terraza',
+  country: 'es',
+  city: 'Madrid',
+  language: 'es',
+  timeout: 120_000,
+});
 ```
 
 **Give `discover` an intent, not a bare keyword.** Rephrase "restaurants" →
@@ -82,11 +111,12 @@ Use Discover when the user wants **entities / a curated list matching criteria**
 
 ### Non-blocking — `client.discoverTrigger(query, options?)`
 
-Same options; returns a `Job` for manual polling.
+Same options; returns a `Job` (the trigger maps to the REST `task_id`) for manual
+polling. Use this to fire a discover and collect the result later.
 
 ```javascript
 const job = await client.discoverTrigger('SaaS pricing strategies', { intent: 'competitor pricing pages' });
-await job.wait({ timeout: 60_000 });
+await job.wait({ timeout: 60_000 });   // polls GET ?task_id=... until status: "done"
 const data = await job.fetch();
 ```
 
