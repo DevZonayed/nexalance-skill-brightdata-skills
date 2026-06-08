@@ -45,8 +45,19 @@ Use SERP when the user wants **web pages / links / rankings**, not entities.
 AI-powered discovery with intent-based relevance ranking, across 31 languages.
 Wraps Bright Data's REST Discover API (`POST https://api.brightdata.com/discover`
 → `task_id` → `GET ?task_id=...`); the SDK handles the trigger/poll for you.
-Returns `Promise<object[]>` where each item is `{ link, title, description, relevance_score, content? }`
-(`relevance_score` is snake_case in the payload; `content` only when `includeContent: true`).
+
+**Return shape — VERIFIED at runtime against `@brightdata/sdk` v1.1.0** (the rows
+are NOT returned as a bare array):
+```js
+const res = await client.discover(query, { intent, includeContent: true });
+// res = { success, data: [ {link, title, description, relevance_score, content?} ],
+//         totalResults, cost, taskId, query, intent, durationSeconds, triggerSentAt, dataFetchedAt }
+if (!res.success) throw new Error(res.error);
+const rows = res.data;   // ← the result rows (REST/CLI put these under `.results` instead)
+```
+`relevance_score` is a float (snake_case); `content` is present only with
+`includeContent: true`, and may be `null` or a 404/nav stub even when the
+`relevance_score` is high — gate on content length before using it.
 
 **Verified against the SDK schema** (`src/schemas/discover.ts`) — these are the
 exact options the JS client accepts:

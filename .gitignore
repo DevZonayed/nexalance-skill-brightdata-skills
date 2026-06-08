@@ -33,3 +33,4 @@ debug/
 # Local-only agent reference notes (do NOT commit)
 CLAUDE.md
 AGENTS.md
+SDK-CLI-FEEDBACK.md
