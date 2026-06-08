@@ -29,3 +29,8 @@ debug/
 
 # Skill evals (development-only, not used at runtime)
 **/evals/
+
+# Local-only agent reference notes (do NOT commit)
+CLAUDE.md
+AGENTS.md
+SDK-CLI-FEEDBACK.md
