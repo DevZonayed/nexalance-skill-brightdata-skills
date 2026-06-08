@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://brightdata.com"><img src="https://img.shields.io/badge/Powered%20by-Bright%20Data-3D7FFC?style=for-the-badge" alt="Powered by Bright Data"></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License"></a>
-  <a href="#skills"><img src="https://img.shields.io/badge/Skills-17-9D97F4?style=for-the-badge" alt="17 Skills"></a>
+  <a href="#skills"><img src="https://img.shields.io/badge/Skills-18-9D97F4?style=for-the-badge" alt="18 Skills"></a>
   <a href="#data-feeds-skill"><img src="https://img.shields.io/badge/Datasets-40+-15C1E6?style=for-the-badge" alt="40+ Datasets"></a>
   <a href="#bright-data-mcp-skill"><img src="https://img.shields.io/badge/MCP_Tools-60+-FF6B35?style=for-the-badge" alt="60+ MCP Tools"></a>
 </p>
@@ -29,6 +29,7 @@
   <a href="#proxy-skill">Proxy</a> •
   <a href="#best-practices-skill">Best Practices</a> •
   <a href="#python-sdk-best-practices-skill">Python SDK</a> •
+  <a href="#javascript-sdk-best-practices-skill">JavaScript SDK</a> •
   <a href="#-setup">Setup</a> •
   <a href="#-examples">Examples</a>
 </p>
@@ -48,6 +49,7 @@ This plugin brings **Bright Data's powerful web infrastructure** directly into C
 - **Write correct Bright Data code** — built-in best practices for Web Unlocker, SERP API, Web Scraper API, and Browser API
 - **Route requests through proxies** — generate working code for Datacenter, ISP, Residential, and Mobile proxy networks, with the right network, IP pool type, targeting, and SSL setup
 - **Build with the Python SDK** — comprehensive guide for the `brightdata-sdk` package with patterns for async/sync clients, platform scrapers, SERP, datasets, and more
+- **Build with the JavaScript/TypeScript SDK** — comprehensive guide for the `@brightdata/sdk` package (`bdclient`) with patterns for web unlocker, platform scrapers, SERP, discover, datasets, browser automation, and Scraper Studio
 
 Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlocker), [SERP API](https://brightdata.com/products/serp-api), and [Web Data APIs](https://brightdata.com/products/web-scraper), this plugin handles the complexity of web access so your AI agents can focus on what matters.
 
@@ -67,6 +69,7 @@ Built on Bright Data's [Web Unlocker](https://brightdata.com/products/web-unlock
 | **`bright-data-best-practices`** | Built-in reference for Web Unlocker, SERP API, Web Scraper API, and Browser API — Claude consults this automatically when writing Bright Data code |
 | **`brightdata-proxy`** | Generate working code to route requests through Bright Data's Datacenter, ISP, Residential, and Mobile proxy networks — network and IP-pool selection, username targeting/session params, SSL CA setup, and integrations for cURL, Python (requests/httpx/aiohttp/Scrapy), Node (fetch/axios), Playwright, Puppeteer, and Selenium |
 | **`python-sdk-best-practices`** | Comprehensive guide for the `brightdata-sdk` Python package — async/sync clients, platform scrapers, SERP, datasets, Scraper Studio, Browser API, error handling, and common patterns |
+| **`js-sdk-best-practices`** | Comprehensive guide for the `@brightdata/sdk` JavaScript/TypeScript package (`bdclient`, Node ≥20, ESM+CJS) — web unlocker, 11 platform scrapers, SERP, Discover, datasets, Browser API, Scraper Studio, error classes, and batch/trigger orchestration |
 | **`brightdata-cli`** | Guide for using the Bright Data CLI (`brightdata` / `bdata`) to scrape, search, extract structured data from 40+ platforms, manage proxy zones, and check account budget — all from the terminal |
 | **`competitive-intel`** | Real-time competitive intelligence using live web data — competitor snapshots, pricing comparison, review mining, hiring signal analysis, content & SEO battles, and market landscape mapping. Replaces $15K+/yr enterprise CI tools at pennies per analysis |
 | **`brand-listening`** | Social listening and brand reputation research — collects what people are saying about a brand across Reddit, X, Instagram, TikTok, YouTube, news, and review sites, then classifies sentiment, clusters themes, and delivers a cited digest with recommendations. Triggers on "what are people saying about us", "monitor mentions", "brand sentiment" |
@@ -532,6 +535,36 @@ The `python-sdk-best-practices` skill is a comprehensive guide for writing corre
 
 ---
 
+## JavaScript SDK Best Practices Skill
+
+The `js-sdk-best-practices` skill is a comprehensive guide for writing correct code with the `@brightdata/sdk` JavaScript/TypeScript package. Claude consults this automatically when writing, modifying, or reviewing Node.js/TypeScript code that uses the Bright Data SDK.
+
+### What it covers
+
+| Topic | Details |
+|-------|---------|
+| **Client setup** | `bdclient` (single async client, Node ≥20, ESM+CJS, TS types), `BRIGHTDATA_API_TOKEN`, `await using` / `close()` lifecycle |
+| **Web Unlocker** | `client.scrapeUrl(url \| url[], { format, dataFormat, country })` — html/markdown/json/screenshot |
+| **Platform scrapers** | 11 platforms (Amazon, LinkedIn, Instagram, Facebook, TikTok, YouTube, Reddit, Pinterest, ChatGPT, Perplexity, DigiKey) — `collect*` / orchestrated / `discover*` method triad |
+| **SERP API** | `client.search.google/bing/yandex` (SERP-only — no platform search router in JS) |
+| **Discover** | `client.discover(query, { intent })` and `discoverTrigger` for AI-ranked entity/page discovery |
+| **Datasets API** | `query → getStatus → download` snapshot lifecycle, camelCase dataset names |
+| **Browser API** | `client.browser.getConnectUrl()` CDP URLs for Playwright/Puppeteer/Selenium |
+| **Scraper Studio** | `client.scraperStudio.run/trigger/status` for custom collectors |
+| **Error handling** | `BRDError` hierarchy (`ValidationError`, `AuthenticationError`, …) |
+| **Batch operations** | array inputs and the `*Trigger` + `job.wait()` pattern (not `Promise.all` of blocking calls) |
+| **Key differences from Python** | `bdclient` vs `BrightDataClient`, camelCase, SERP-only `search`, no platform search router |
+
+### Reference files
+
+- [skills/js-sdk-best-practices/SKILL.md](skills/js-sdk-best-practices/SKILL.md) — Core patterns, service selection, and best practices
+- [skills/js-sdk-best-practices/references/scrapers.md](skills/js-sdk-best-practices/references/scrapers.md) — Web Unlocker options + verified per-platform method tables
+- [skills/js-sdk-best-practices/references/search.md](skills/js-sdk-best-practices/references/search.md) — SERP engines and the Discover API
+- [skills/js-sdk-best-practices/references/datasets-overview.md](skills/js-sdk-best-practices/references/datasets-overview.md) — dataset names and the snapshot lifecycle
+- [skills/js-sdk-best-practices/references/advanced.md](skills/js-sdk-best-practices/references/advanced.md) — constructor options, batch/trigger, Browser API, Scraper Studio, errors, zones
+
+---
+
 ## Setup
 
 ### Prerequisites
@@ -769,6 +802,13 @@ brightdata-plugin/
 │   │   ├── SKILL.md             # Python SDK patterns and best practices
 │   │   └── references/
 │   │       └── api-reference.md # Full API surface, payloads, constants
+│   ├── js-sdk-best-practices/
+│   │   ├── SKILL.md             # JavaScript/TypeScript SDK (@brightdata/sdk) patterns
+│   │   └── references/
+│   │       ├── scrapers.md      # Web Unlocker + per-platform method tables
+│   │       ├── search.md        # SERP engines and Discover API
+│   │       ├── datasets-overview.md  # Dataset names and snapshot lifecycle
+│   │       └── advanced.md      # Config, batch/trigger, Browser API, Scraper Studio, errors
 │   ├── proxy/
 │   │   ├── SKILL.md             # Proxy networks, pool types, targeting, SSL, code patterns
 │   │   ├── references/
@@ -906,6 +946,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Browser API Best Practices](skills/bright-data-best-practices/references/browser-api.md) - CDP functions, geo, bandwidth
 - [Python SDK Best Practices](skills/python-sdk-best-practices/SKILL.md) - Async/sync clients, scrapers, SERP, datasets
 - [Python SDK API Reference](skills/python-sdk-best-practices/references/api-reference.md) - Full API surface, payloads, constants
+- [JavaScript SDK Best Practices](skills/js-sdk-best-practices/SKILL.md) - `bdclient`, web unlocker, platform scrapers, SERP, Discover, datasets
+- [JavaScript SDK Scrapers Reference](skills/js-sdk-best-practices/references/scrapers.md) - Per-platform verified method tables
 - [Scraper Builder](skills/scraper-builder/SKILL.md) - Build scrapers for any site with guided API selection
 - [Supported Domains](skills/scraper-builder/references/supported-domains.md) - 100+ pre-built scrapers lookup
 - [Scraper Studio](skills/scraper-studio/SKILL.md) - AI-generated scrapers via `bdata scraper create` / `bdata scraper run`
