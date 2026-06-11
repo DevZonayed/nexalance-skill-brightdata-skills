@@ -184,6 +184,14 @@ bdata zones info my_zone --pretty  # Pretty-print zone info
 
 View account balance and per-zone cost/bandwidth. Read-only.
 
+> New accounts get **5,000 free credits/month** (~$7.50, 1 credit per
+> request) shared across Unlocker, SERP, Web Scraper, and Scraper Studio;
+> they reset on the 1st and don't roll over. Proxy and Browser API are
+> billed separately (not from free credits). With no deposited funds a
+> hard stop kicks in when credits run out — so a "balance" near zero on a
+> free account is expected, not an error.
+> See: https://docs.brightdata.com/general/account/billing-and-pricing/free-tier
+
 | Subcommand | Description |
 |------------|-------------|
 | *(none)* | Quick account balance |

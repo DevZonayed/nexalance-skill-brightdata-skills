@@ -257,6 +257,17 @@ Use this when the human still needs to sign up, sign in, or generate
 a key. Skip this path if `bdata config` already shows an authenticated
 account, or if `BRIGHTDATA_API_KEY` is already set in the environment.
 
+> **Free tier — no card needed to start.** Every new account gets
+> **5,000 free credits per month** (~$7.50), shared across **Unlocker
+> API**, **SERP API**, **Web Scraper API**, and **Scraper Studio** — 1
+> credit per request (Scraper Studio: 1 per page load). Credits reset on
+> the 1st and don't roll over. With no deposited funds, a **hard stop**
+> applies when they run out (no surprise charges). Proxy products and the
+> **Browser API are not covered** by monthly credits — those use separate
+> trial credit ($2 for 7 days, +$5 for 30 days after adding a payment
+> method). Custom-PAYG and pre-commit plans are not eligible.
+> Docs: https://docs.brightdata.com/general/account/billing-and-pricing/free-tier
+
 ### Easiest: use the CLI's OAuth flow
 
 ```bash

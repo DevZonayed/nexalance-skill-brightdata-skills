@@ -286,7 +286,7 @@ For any specific Bright Data error code not covered above, look it up in the ful
 
 Don't try to script the control-panel flow or call account-management APIs to create zones for them — those flows are interactive and account-specific. Instead, say:
 
-> Sign up at https://brightdata.com (the free trial gives $5 credit, no card needed for some tiers). Once you're in, click **Proxies & Scraping** → **Add** and the in-app helper will walk you through choosing the network, the pool type, and naming the zone. When it finishes, copy the **customer ID**, **zone name**, and **zone password** from the zone's overview page and paste them in here — I'll generate the code.
+> Sign up at https://brightdata.com (new accounts get $2 trial credit for 7 days, plus a $5 bonus for 30 days after adding a payment method — note proxy products are billed separately and are **not** covered by the monthly free credits). Once you're in, click **Proxies & Scraping** → **Add** and the in-app helper will walk you through choosing the network, the pool type, and naming the zone. When it finishes, copy the **customer ID**, **zone name**, and **zone password** from the zone's overview page and paste them in here — I'll generate the code.
 
 The control panel's `proxy_examples` page (https://brightdata.com/cp/zones/proxy_examples) also has live, account-specific snippets for many languages and frameworks — use it as a sanity check if anything in this skill seems out of date.
 
